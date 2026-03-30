@@ -103,7 +103,7 @@ const Dashboard = () => {
             </button>
             <div>
               <h1 className="text-xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>Dashboard</h1>
-              <p className="text-xs text-muted-foreground">Welcome back, Admin</p>
+              <p className="text-xs text-muted-foreground">Welcome back, {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Admin'}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
