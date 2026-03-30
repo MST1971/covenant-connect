@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Users, Calendar, MessageSquare, Heart, BarChart3, Settings,
   ChevronRight, TrendingUp, UserPlus, Clock, Menu, X, LogOut,
+  Home, BookOpen, Shield, Bell, FileText
+} from "lucide-react";
   Home, BookOpen, Shield, Bell, FileText
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
