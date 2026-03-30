@@ -81,7 +81,7 @@ const Dashboard = () => {
         </nav>
         <div className="absolute bottom-4 left-3 right-3">
           <button
-            onClick={() => navigate("/")}
+            onClick={async () => { await signOut(); navigate("/"); }}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-primary-foreground/60 hover:bg-primary-foreground/10 transition-colors"
           >
             <LogOut className="h-4 w-4" /> Sign Out
