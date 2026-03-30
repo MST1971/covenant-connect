@@ -6,8 +6,6 @@ import {
   ChevronRight, TrendingUp, UserPlus, Clock, Menu, X, LogOut,
   Home, BookOpen, Shield, Bell, FileText
 } from "lucide-react";
-  Home, BookOpen, Shield, Bell, FileText
-} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import churchLogo from "@/assets/church-logo.png";
