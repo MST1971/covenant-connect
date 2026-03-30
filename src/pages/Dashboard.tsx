@@ -128,7 +128,7 @@ const Dashboard = () => {
                         {stat.value}
                       </p>
                       <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                        <TrendingUp className="h-3 w-3 text-green-500" />
+                        <TrendingUp className="h-3 w-3 text-secondary" />
                         {stat.change}
                       </p>
                     </div>
