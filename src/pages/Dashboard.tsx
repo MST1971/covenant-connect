@@ -40,6 +40,7 @@ const recentActivities = [
 ];
 
 const Dashboard = () => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
