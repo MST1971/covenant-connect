@@ -14,16 +14,262 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      families: {
+        Row: {
+          created_at: string
+          family_head_id: string | null
+          family_name: string
+          household_address: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          family_head_id?: string | null
+          family_name: string
+          household_address?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          family_head_id?: string | null
+          family_name?: string
+          household_address?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "families_family_head_id_fkey"
+            columns: ["family_head_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      family_members: {
+        Row: {
+          created_at: string
+          family_id: string
+          id: string
+          profile_id: string
+          relationship: string
+        }
+        Insert: {
+          created_at?: string
+          family_id: string
+          id?: string
+          profile_id: string
+          relationship: string
+        }
+        Update: {
+          created_at?: string
+          family_id?: string
+          id?: string
+          profile_id?: string
+          relationship?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_members_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "family_members_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          address: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          date_of_birth: string | null
+          education: string | null
+          email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          full_name: string
+          gender: Database["public"]["Enums"]["gender_type"] | null
+          health_notes: string | null
+          id: string
+          marital_status:
+            | Database["public"]["Enums"]["marital_status_type"]
+            | null
+          membership_status:
+            | Database["public"]["Enums"]["membership_status"]
+            | null
+          occupation: string | null
+          pastor_notes: string | null
+          phone_number: string | null
+          photo_url: string | null
+          skills: string | null
+          state: string | null
+          updated_at: string
+          user_id: string | null
+          whatsapp_number: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          education?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          full_name: string
+          gender?: Database["public"]["Enums"]["gender_type"] | null
+          health_notes?: string | null
+          id?: string
+          marital_status?:
+            | Database["public"]["Enums"]["marital_status_type"]
+            | null
+          membership_status?:
+            | Database["public"]["Enums"]["membership_status"]
+            | null
+          occupation?: string | null
+          pastor_notes?: string | null
+          phone_number?: string | null
+          photo_url?: string | null
+          skills?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id?: string | null
+          whatsapp_number?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          education?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          full_name?: string
+          gender?: Database["public"]["Enums"]["gender_type"] | null
+          health_notes?: string | null
+          id?: string
+          marital_status?:
+            | Database["public"]["Enums"]["marital_status_type"]
+            | null
+          membership_status?:
+            | Database["public"]["Enums"]["membership_status"]
+            | null
+          occupation?: string | null
+          pastor_notes?: string | null
+          phone_number?: string | null
+          photo_url?: string | null
+          skills?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id?: string | null
+          whatsapp_number?: string | null
+        }
+        Relationships: []
+      }
+      spiritual_info: {
+        Row: {
+          baptism_date: string | null
+          created_at: string
+          date_joined: string | null
+          department: string | null
+          id: string
+          ministry_involvement: string | null
+          profile_id: string
+          salvation_date: string | null
+          spiritual_gifts: string | null
+          updated_at: string
+        }
+        Insert: {
+          baptism_date?: string | null
+          created_at?: string
+          date_joined?: string | null
+          department?: string | null
+          id?: string
+          ministry_involvement?: string | null
+          profile_id: string
+          salvation_date?: string | null
+          spiritual_gifts?: string | null
+          updated_at?: string
+        }
+        Update: {
+          baptism_date?: string | null
+          created_at?: string
+          date_joined?: string | null
+          department?: string | null
+          id?: string
+          ministry_involvement?: string | null
+          profile_id?: string
+          salvation_date?: string | null
+          spiritual_gifts?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spiritual_info_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role:
+        | "super_admin"
+        | "pastor"
+        | "secretary"
+        | "department_leader"
+        | "finance_officer"
+        | "member"
+      gender_type: "male" | "female"
+      marital_status_type: "single" | "married" | "divorced" | "widowed"
+      membership_status: "member" | "visitor" | "worker"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +396,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: [
+        "super_admin",
+        "pastor",
+        "secretary",
+        "department_leader",
+        "finance_officer",
+        "member",
+      ],
+      gender_type: ["male", "female"],
+      marital_status_type: ["single", "married", "divorced", "widowed"],
+      membership_status: ["member", "visitor", "worker"],
+    },
   },
 } as const

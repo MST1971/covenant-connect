@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Users, Calendar, MessageSquare, Heart, BarChart3, Settings,
   ChevronRight, TrendingUp, UserPlus, Clock, Menu, X, LogOut,
@@ -40,6 +41,7 @@ const recentActivities = [
 
 const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
   return (
@@ -79,7 +81,7 @@ const Dashboard = () => {
         </nav>
         <div className="absolute bottom-4 left-3 right-3">
           <button
-            onClick={() => navigate("/")}
+            onClick={async () => { await signOut(); navigate("/"); }}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-primary-foreground/60 hover:bg-primary-foreground/10 transition-colors"
           >
             <LogOut className="h-4 w-4" /> Sign Out
@@ -101,7 +103,7 @@ const Dashboard = () => {
             </button>
             <div>
               <h1 className="text-xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>Dashboard</h1>
-              <p className="text-xs text-muted-foreground">Welcome back, Admin</p>
+              <p className="text-xs text-muted-foreground">Welcome back, {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Admin'}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
