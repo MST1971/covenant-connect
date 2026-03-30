@@ -174,7 +174,7 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent className="space-y-2">
                 {[
-                  { label: "Add New Member", icon: UserPlus },
+                  { label: "Add New Member", icon: UserPlus, path: "/members/register" },
                   { label: "Record Attendance", icon: Shield },
                   { label: "Send Message", icon: MessageSquare },
                   { label: "Create Event", icon: Calendar },
@@ -182,6 +182,7 @@ const Dashboard = () => {
                 ].map((action) => (
                   <button
                     key={action.label}
+                    onClick={() => action.path && navigate(action.path)}
                     className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors text-sm"
                   >
                     <span className="flex items-center gap-2.5">
