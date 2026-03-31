@@ -11,17 +11,17 @@ import { Button } from "@/components/ui/button";
 import churchLogo from "@/assets/church-logo.png";
 
 const navItems = [
-  { icon: Home, label: "Dashboard", active: true },
-  { icon: Users, label: "Members" },
-  { icon: UserPlus, label: "Visitors" },
-  { icon: BookOpen, label: "Groups" },
-  { icon: Calendar, label: "Events" },
-  { icon: MessageSquare, label: "Messages" },
-  { icon: Heart, label: "Giving" },
-  { icon: Shield, label: "Attendance" },
-  { icon: BarChart3, label: "Reports" },
-  { icon: FileText, label: "Documents" },
-  { icon: Settings, label: "Settings" },
+  { icon: Home, label: "Dashboard", path: "/dashboard", active: true },
+  { icon: Users, label: "Members", path: "/members" },
+  { icon: UserPlus, label: "Visitors", path: "" },
+  { icon: BookOpen, label: "Groups", path: "" },
+  { icon: Calendar, label: "Events", path: "" },
+  { icon: MessageSquare, label: "Messages", path: "" },
+  { icon: Heart, label: "Giving", path: "" },
+  { icon: Shield, label: "Attendance", path: "" },
+  { icon: BarChart3, label: "Reports", path: "" },
+  { icon: FileText, label: "Documents", path: "" },
+  { icon: Settings, label: "Settings", path: "" },
 ];
 
 const stats = [
@@ -68,6 +68,7 @@ const Dashboard = () => {
           {navItems.map((item) => (
             <button
               key={item.label}
+              onClick={() => item.path && navigate(item.path)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
                 item.active
                   ? "bg-primary-foreground/15 text-accent"
