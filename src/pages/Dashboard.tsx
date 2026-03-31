@@ -68,6 +68,7 @@ const Dashboard = () => {
           {navItems.map((item) => (
             <button
               key={item.label}
+              onClick={() => item.path && navigate(item.path)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
                 item.active
                   ? "bg-primary-foreground/15 text-accent"
