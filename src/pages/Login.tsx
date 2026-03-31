@@ -22,7 +22,6 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [phone, setPhone] = useState("");
 
   useEffect(() => {
     if (session) navigate("/dashboard", { replace: true });
@@ -58,20 +57,6 @@ const Login = () => {
     });
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
-    }
-  };
-
-  const handlePhoneAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithOtp({ phone });
-      if (error) throw error;
-      toast({ title: "Code sent!", description: "Check your phone for a verification code." });
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } finally {
-      setLoading(false);
     }
   };
 
