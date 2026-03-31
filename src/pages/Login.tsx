@@ -116,48 +116,25 @@ const Login = () => {
               </div>
             </div>
 
-            <Tabs defaultValue="email" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="email" className="gap-1.5">
-                  <Mail className="h-3.5 w-3.5" /> Email
-                </TabsTrigger>
-                <TabsTrigger value="phone" className="gap-1.5">
-                  <Phone className="h-3.5 w-3.5" /> Phone
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="email">
-                <form onSubmit={handleEmailAuth} className="space-y-3 mt-4">
-                  {isSignUp && (
-                    <div className="space-y-1.5">
-                      <Label htmlFor="name">Full Name</Label>
-                      <Input id="name" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Enter your full name" required />
-                    </div>
-                  )}
-                  <div className="space-y-1.5">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your@email.com" required />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="password">Password</Label>
-                    <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={6} />
-                  </div>
-                  <Button type="submit" disabled={loading} className="w-full gradient-gold text-accent-foreground font-semibold shadow-gold hover:opacity-90">
-                    {loading ? "Please wait..." : isSignUp ? "Create Account" : "Sign In"}
-                  </Button>
-                </form>
-              </TabsContent>
-              <TabsContent value="phone">
-                <form onSubmit={handlePhoneAuth} className="space-y-3 mt-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+234 800 000 0000" required />
-                  </div>
-                  <Button type="submit" disabled={loading} className="w-full gradient-gold text-accent-foreground font-semibold shadow-gold hover:opacity-90">
-                    {loading ? "Sending..." : "Send Verification Code"}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
+            <form onSubmit={handleEmailAuth} className="space-y-3">
+              {isSignUp && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="name">Full Name</Label>
+                  <Input id="name" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Enter your full name" required />
+                </div>
+              )}
+              <div className="space-y-1.5">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your@email.com" required />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="password">Password</Label>
+                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={6} />
+              </div>
+              <Button type="submit" disabled={loading} className="w-full gradient-gold text-accent-foreground font-semibold shadow-gold hover:opacity-90">
+                {loading ? "Please wait..." : isSignUp ? "Create Account" : "Sign In"}
+              </Button>
+            </form>
 
             <p className="text-center text-sm text-muted-foreground">
               {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
