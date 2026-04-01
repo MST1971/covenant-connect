@@ -35,11 +35,28 @@ const statusColors: Record<string, string> = {
 
 const MembersList = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("All Departments");
   const [selectedMember, setSelectedMember] = useState<Profile | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+
+  const generateQR = useMutation({
+    mutationFn: async (memberId: string) => {
+      const qrCode = `CBC-${memberId.slice(0, 8).toUpperCase()}`;
+      const { error } = await supabase.from("profiles").update({ qr_code: qrCode }).eq("id", memberId);
+      if (error) throw error;
+      return qrCode;
+    },
+    onSuccess: (qrCode) => {
+      qc.invalidateQueries({ queryKey: ["profiles"] });
+      if (selectedMember) setSelectedMember({ ...selectedMember, qr_code: qrCode } as any);
+      toast({ title: "QR Code Generated" });
+    },
+    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
 
   const { data: profiles, isLoading } = useQuery({
     queryKey: ["profiles"],
