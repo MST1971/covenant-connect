@@ -176,10 +176,10 @@ const Dashboard = () => {
               <CardContent className="space-y-2">
                 {[
                   { label: "Add New Member", icon: UserPlus, path: "/members/register" },
-                  { label: "Record Attendance", icon: Shield },
-                  { label: "Send Message", icon: MessageSquare },
-                  { label: "Create Event", icon: Calendar },
-                  { label: "Record Offering", icon: Heart },
+                  { label: "Scan Attendance", icon: QrCode, path: "/attendance/scan" },
+                  { label: "Record Attendance", icon: Shield, path: "/attendance/reports" },
+                  { label: "Manage Programs", icon: Calendar, path: "/programs" },
+                  { label: "Departments", icon: Building2, path: "/departments" },
                 ].map((action) => (
                   <button
                     key={action.label}
