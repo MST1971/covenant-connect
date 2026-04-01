@@ -14,13 +14,13 @@ const navItems = [
   { icon: Home, label: "Dashboard", path: "/dashboard", active: true },
   { icon: Users, label: "Members", path: "/members" },
   { icon: UserPlus, label: "Visitors", path: "" },
-  { icon: BookOpen, label: "Groups", path: "" },
-  { icon: Calendar, label: "Events", path: "" },
+  { icon: Building2, label: "Departments", path: "/departments" },
+  { icon: Calendar, label: "Programs", path: "/programs" },
+  { icon: QrCode, label: "Scan Attendance", path: "/attendance/scan" },
+  { icon: Shield, label: "Attendance Reports", path: "/attendance/reports" },
   { icon: MessageSquare, label: "Messages", path: "" },
   { icon: Heart, label: "Giving", path: "" },
-  { icon: Shield, label: "Attendance", path: "" },
   { icon: BarChart3, label: "Reports", path: "" },
-  { icon: FileText, label: "Documents", path: "" },
   { icon: Settings, label: "Settings", path: "" },
 ];
 
