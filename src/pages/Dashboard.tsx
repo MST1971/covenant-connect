@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   Users, Calendar, MessageSquare, Heart, BarChart3, Settings,
   ChevronRight, TrendingUp, UserPlus, Clock, Menu, X, LogOut,
-  Home, BookOpen, Shield, Bell, FileText
+  Home, BookOpen, Shield, Bell, FileText, QrCode, Building2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
