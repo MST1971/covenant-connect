@@ -10,6 +10,10 @@ import Login from "./pages/Login.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import MemberRegistration from "./pages/MemberRegistration.tsx";
 import MembersList from "./pages/MembersList.tsx";
+import Programs from "./pages/Programs.tsx";
+import Departments from "./pages/Departments.tsx";
+import ScanAttendance from "./pages/ScanAttendance.tsx";
+import AttendanceReports from "./pages/AttendanceReports.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
