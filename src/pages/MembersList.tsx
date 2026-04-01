@@ -309,6 +309,33 @@ const MembersList = () => {
                   </div>
                 )}
               </div>
+
+              <Separator className="my-2" />
+
+              {/* QR Code */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">QR Code</h4>
+                {(selectedMember as any).qr_code ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <QRCodeSVG value={(selectedMember as any).qr_code} size={150} />
+                    <p className="text-xs text-muted-foreground font-mono">{(selectedMember as any).qr_code}</p>
+                    <Button variant="outline" size="sm" onClick={() => {
+                      const svg = document.querySelector('.qr-container svg');
+                      if (!svg) return;
+                      const data = new XMLSerializer().serializeToString(svg);
+                      const blob = new Blob([data], { type: 'image/svg+xml' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a'); a.href = url; a.download = `qr-${selectedMember.full_name}.svg`; a.click();
+                    }}>
+                      <Download className="h-3.5 w-3.5 mr-1" /> Download
+                    </Button>
+                  </div>
+                ) : (
+                  <Button variant="outline" onClick={() => generateQR.mutate(selectedMember.id)} disabled={generateQR.isPending}>
+                    <QrCode className="h-4 w-4 mr-1" /> Generate QR Code
+                  </Button>
+                )}
+              </div>
             </>
           )}
         </DialogContent>
