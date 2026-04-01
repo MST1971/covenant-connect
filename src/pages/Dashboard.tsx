@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   Users, Calendar, MessageSquare, Heart, BarChart3, Settings,
   ChevronRight, TrendingUp, UserPlus, Clock, Menu, X, LogOut,
-  Home, BookOpen, Shield, Bell, FileText
+  Home, BookOpen, Shield, Bell, FileText, QrCode, Building2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,13 +14,13 @@ const navItems = [
   { icon: Home, label: "Dashboard", path: "/dashboard", active: true },
   { icon: Users, label: "Members", path: "/members" },
   { icon: UserPlus, label: "Visitors", path: "" },
-  { icon: BookOpen, label: "Groups", path: "" },
-  { icon: Calendar, label: "Events", path: "" },
+  { icon: Building2, label: "Departments", path: "/departments" },
+  { icon: Calendar, label: "Programs", path: "/programs" },
+  { icon: QrCode, label: "Scan Attendance", path: "/attendance/scan" },
+  { icon: Shield, label: "Attendance Reports", path: "/attendance/reports" },
   { icon: MessageSquare, label: "Messages", path: "" },
   { icon: Heart, label: "Giving", path: "" },
-  { icon: Shield, label: "Attendance", path: "" },
   { icon: BarChart3, label: "Reports", path: "" },
-  { icon: FileText, label: "Documents", path: "" },
   { icon: Settings, label: "Settings", path: "" },
 ];
 
@@ -176,10 +176,10 @@ const Dashboard = () => {
               <CardContent className="space-y-2">
                 {[
                   { label: "Add New Member", icon: UserPlus, path: "/members/register" },
-                  { label: "Record Attendance", icon: Shield },
-                  { label: "Send Message", icon: MessageSquare },
-                  { label: "Create Event", icon: Calendar },
-                  { label: "Record Offering", icon: Heart },
+                  { label: "Scan Attendance", icon: QrCode, path: "/attendance/scan" },
+                  { label: "Record Attendance", icon: Shield, path: "/attendance/reports" },
+                  { label: "Manage Programs", icon: Calendar, path: "/programs" },
+                  { label: "Departments", icon: Building2, path: "/departments" },
                 ].map((action) => (
                   <button
                     key={action.label}

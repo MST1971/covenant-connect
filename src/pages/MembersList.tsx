@@ -1,11 +1,12 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import {
   Search, Filter, UserPlus, ArrowLeft, Phone, Mail, MapPin,
-  ChevronRight, Users, X, Calendar, Heart, Briefcase
+  ChevronRight, Users, X, Calendar, Heart, Briefcase, QrCode, Download
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { QRCodeSVG } from "qrcode.react";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Profile = Tables<"profiles">;
@@ -33,11 +35,28 @@ const statusColors: Record<string, string> = {
 
 const MembersList = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("All Departments");
   const [selectedMember, setSelectedMember] = useState<Profile | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+
+  const generateQR = useMutation({
+    mutationFn: async (memberId: string) => {
+      const qrCode = `CBC-${memberId.slice(0, 8).toUpperCase()}`;
+      const { error } = await supabase.from("profiles").update({ qr_code: qrCode }).eq("id", memberId);
+      if (error) throw error;
+      return qrCode;
+    },
+    onSuccess: (qrCode) => {
+      qc.invalidateQueries({ queryKey: ["profiles"] });
+      if (selectedMember) setSelectedMember({ ...selectedMember, qr_code: qrCode } as any);
+      toast({ title: "QR Code Generated" });
+    },
+    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
 
   const { data: profiles, isLoading } = useQuery({
     queryKey: ["profiles"],
@@ -288,6 +307,33 @@ const MembersList = () => {
                     <span className="text-muted-foreground">Health Notes:</span>
                     <p className="mt-0.5">{selectedMember.health_notes}</p>
                   </div>
+                )}
+              </div>
+
+              <Separator className="my-2" />
+
+              {/* QR Code */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">QR Code</h4>
+                {(selectedMember as any).qr_code ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <QRCodeSVG value={(selectedMember as any).qr_code} size={150} />
+                    <p className="text-xs text-muted-foreground font-mono">{(selectedMember as any).qr_code}</p>
+                    <Button variant="outline" size="sm" onClick={() => {
+                      const svg = document.querySelector('.qr-container svg');
+                      if (!svg) return;
+                      const data = new XMLSerializer().serializeToString(svg);
+                      const blob = new Blob([data], { type: 'image/svg+xml' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a'); a.href = url; a.download = `qr-${selectedMember.full_name}.svg`; a.click();
+                    }}>
+                      <Download className="h-3.5 w-3.5 mr-1" /> Download
+                    </Button>
+                  </div>
+                ) : (
+                  <Button variant="outline" onClick={() => generateQR.mutate(selectedMember.id)} disabled={generateQR.isPending}>
+                    <QrCode className="h-4 w-4 mr-1" /> Generate QR Code
+                  </Button>
                 )}
               </div>
             </>

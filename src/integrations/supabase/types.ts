@@ -14,6 +14,138 @@ export type Database = {
   }
   public: {
     Tables: {
+      attendance_logs: {
+        Row: {
+          created_at: string
+          date: string
+          department_id: string | null
+          id: string
+          profile_id: string
+          program_id: string
+          scan_mode: string
+          scan_time: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          department_id?: string | null
+          id?: string
+          profile_id: string
+          program_id: string
+          scan_mode?: string
+          scan_time?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          department_id?: string | null
+          id?: string
+          profile_id?: string
+          program_id?: string
+          scan_mode?: string
+          scan_time?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_logs_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_logs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_logs_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      department_members: {
+        Row: {
+          department_id: string
+          id: string
+          joined_at: string
+          profile_id: string
+        }
+        Insert: {
+          department_id: string
+          id?: string
+          joined_at?: string
+          profile_id: string
+        }
+        Update: {
+          department_id?: string
+          id?: string
+          joined_at?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "department_members_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "department_members_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      departments: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          leader_id: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          leader_id?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          leader_id?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "departments_leader_id_fkey"
+            columns: ["leader_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       families: {
         Row: {
           created_at: string
@@ -113,6 +245,7 @@ export type Database = {
           pastor_notes: string | null
           phone_number: string | null
           photo_url: string | null
+          qr_code: string | null
           skills: string | null
           state: string | null
           updated_at: string
@@ -143,6 +276,7 @@ export type Database = {
           pastor_notes?: string | null
           phone_number?: string | null
           photo_url?: string | null
+          qr_code?: string | null
           skills?: string | null
           state?: string | null
           updated_at?: string
@@ -173,11 +307,48 @@ export type Database = {
           pastor_notes?: string | null
           phone_number?: string | null
           photo_url?: string | null
+          qr_code?: string | null
           skills?: string | null
           state?: string | null
           updated_at?: string
           user_id?: string | null
           whatsapp_number?: string | null
+        }
+        Relationships: []
+      }
+      programs: {
+        Row: {
+          created_at: string
+          day: string
+          end_time: string
+          grace_period: string | null
+          id: string
+          is_active: boolean
+          name: string
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day: string
+          end_time: string
+          grace_period?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day?: string
+          end_time?: string
+          grace_period?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          start_time?: string
+          updated_at?: string
         }
         Relationships: []
       }
