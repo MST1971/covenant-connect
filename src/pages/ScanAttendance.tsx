@@ -67,11 +67,10 @@ const ScanAttendance = () => {
   });
 
   const markAttendance = useMutation({
-    mutationFn: async (qrCode: string) => {
-      // Find member by QR code
+    mutationFn: async (qrCode: string): Promise<ScanResult> => {
       const { data: member, error: memberErr } = await supabase
         .from("profiles")
-        .select("id, full_name")
+        .select("id, full_name, whatsapp_number, phone_number")
         .eq("qr_code", qrCode)
         .single();
       if (memberErr || !member) throw new Error("Member not found. Invalid QR code.");
@@ -79,10 +78,11 @@ const ScanAttendance = () => {
       const now = new Date();
       const today = now.toISOString().split("T")[0];
       const currentTime = now.toTimeString().slice(0, 8);
+      const scanTimeFormatted = now.toLocaleTimeString("en-NG", { hour: "2-digit", minute: "2-digit" });
+      const scanDateFormatted = now.toLocaleDateString("en-NG", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
 
       if (scanMode === "department") {
         if (!selectedDeptId) throw new Error("Please select a department first.");
-        // Verify member belongs to department
         const { data: deptMember } = await supabase
           .from("department_members")
           .select("id")
@@ -92,7 +92,6 @@ const ScanAttendance = () => {
         if (!deptMember) throw new Error(`Access Denied: ${member.full_name} is not a member of this department.`);
       }
 
-      // Get all active programs for today
       const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
       const todayDay = dayNames[now.getDay()];
       const { data: programs } = await supabase
@@ -104,9 +103,9 @@ const ScanAttendance = () => {
       if (!programs?.length) throw new Error("No programs scheduled for today.");
 
       const markedPrograms: string[] = [];
+      const missedPrograms: string[] = [];
 
       if (scanMode === "general") {
-        // Mark present for all programs where scan_time <= end_time
         for (const prog of programs) {
           if (currentTime <= prog.end_time) {
             const { error: insertErr } = await supabase.from("attendance_logs").upsert(
@@ -114,10 +113,11 @@ const ScanAttendance = () => {
               { onConflict: "profile_id,program_id,date" }
             );
             if (!insertErr) markedPrograms.push(prog.name);
+          } else {
+            missedPrograms.push(prog.name);
           }
         }
       } else {
-        // Department mode — mark for current active program
         const activeProgram = programs.find(p => currentTime >= p.start_time && currentTime <= p.end_time);
         if (activeProgram) {
           const { error: insertErr } = await supabase.from("attendance_logs").upsert(
@@ -126,13 +126,14 @@ const ScanAttendance = () => {
           );
           if (!insertErr) markedPrograms.push(activeProgram.name);
         }
+        programs.filter(p => p.id !== activeProgram?.id).forEach(p => missedPrograms.push(p.name));
       }
 
       if (!markedPrograms.length) {
-        return { name: member.full_name, status: "already_scanned", programs: [] };
+        return { name: member.full_name, status: "already_scanned", programs: [], missedPrograms: [], whatsappNumber: member.whatsapp_number || member.phone_number, scanTime: scanTimeFormatted, scanDate: scanDateFormatted };
       }
 
-      return { name: member.full_name, status: "success", programs: markedPrograms };
+      return { name: member.full_name, status: "success", programs: markedPrograms, missedPrograms, whatsappNumber: member.whatsapp_number || member.phone_number, scanTime: scanTimeFormatted, scanDate: scanDateFormatted };
     },
     onSuccess: (result) => {
       setLastResult(result);
@@ -144,7 +145,7 @@ const ScanAttendance = () => {
       }
     },
     onError: (e: any) => {
-      setLastResult({ name: "", status: "error", programs: [e.message] });
+      setLastResult({ name: "", status: "error", programs: [e.message], missedPrograms: [], whatsappNumber: null, scanTime: "", scanDate: "" });
       toast({ title: "Scan Error", description: e.message, variant: "destructive" });
     },
   });
