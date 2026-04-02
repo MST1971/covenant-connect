@@ -251,19 +251,33 @@ const ScanAttendance = () => {
 
         {/* Last Result */}
         {lastResult && (
-          <Card className={`border-0 shadow-sm ${lastResult.status === "success" ? "bg-green-50 dark:bg-green-950/20" : lastResult.status === "error" ? "bg-red-50 dark:bg-red-950/20" : "bg-yellow-50 dark:bg-yellow-950/20"}`}>
+          <Card className={`border-0 shadow-sm ${lastResult.status === "success" ? "bg-green-50 dark:bg-green-950/20" : lastResult.status === "error" ? "bg-destructive/5" : "bg-yellow-50 dark:bg-yellow-950/20"}`}>
             <CardContent className="p-4 flex items-start gap-3">
               {lastResult.status === "success" ? (
                 <CheckCircle2 className="h-6 w-6 text-green-600 shrink-0 mt-0.5" />
               ) : (
                 <XCircle className="h-6 w-6 text-destructive shrink-0 mt-0.5" />
               )}
-              <div>
+              <div className="flex-1">
                 <p className="font-semibold">{lastResult.name || "Scan Result"}</p>
                 {lastResult.status === "success" && (
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {lastResult.programs.map(p => <Badge key={p} variant="secondary" className="text-xs">{p}</Badge>)}
-                  </div>
+                  <>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {lastResult.programs.map(p => <Badge key={p} variant="secondary" className="text-xs">{p}</Badge>)}
+                    </div>
+                    {lastResult.missedPrograms.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {lastResult.missedPrograms.map(p => <Badge key={p} variant="outline" className="text-xs text-destructive">{p} (missed)</Badge>)}
+                      </div>
+                    )}
+                    <Button
+                      size="sm"
+                      className="mt-3 bg-green-600 hover:bg-green-700 text-white"
+                      onClick={() => sendWhatsAppNotification(lastResult)}
+                    >
+                      <MessageCircle className="h-4 w-4 mr-1" /> Send WhatsApp Notification
+                    </Button>
+                  </>
                 )}
                 {lastResult.status === "error" && <p className="text-sm text-destructive">{lastResult.programs[0]}</p>}
                 {lastResult.status === "already_scanned" && <p className="text-sm text-muted-foreground">Already recorded today</p>}
