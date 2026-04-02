@@ -150,6 +150,42 @@ const ScanAttendance = () => {
     },
   });
 
+  const buildWhatsAppMessage = (result: ScanResult) => {
+    const presentList = result.programs.length > 0
+      ? result.programs.map(p => `- ${p}`).join("\n")
+      : "- None";
+    const missedList = result.missedPrograms.length > 0
+      ? result.missedPrograms.map(p => `- ${p}`).join("\n")
+      : "- None";
+
+    return `Beloved ${result.name},
+
+Your attendance has been recorded.
+Your presence is not a number but a blessing to the body of Christ.
+You are highly favored. Amen
+
+With love from
+Olawale Raymond
+Lead Pastor
+
+🕒 Time: ${result.scanTime}
+📅 Date: ${result.scanDate}
+✅ Present:
+${presentList}
+❌ Missed:
+${missedList}`;
+  };
+
+  const sendWhatsAppNotification = (result: ScanResult) => {
+    if (!result.whatsappNumber) {
+      toast({ title: "No WhatsApp number", description: "This member has no WhatsApp or phone number on file.", variant: "destructive" });
+      return;
+    }
+    const phone = result.whatsappNumber.replace(/[^0-9+]/g, "").replace(/^\+/, "");
+    const message = encodeURIComponent(buildWhatsAppMessage(result));
+    window.open(`https://wa.me/${phone}?text=${message}`, "_blank");
+  };
+
   const startScanner = useCallback(async () => {
     if (!scannerContainerRef.current) return;
     try {
