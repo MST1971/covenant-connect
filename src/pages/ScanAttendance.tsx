@@ -13,6 +13,16 @@ import churchLogo from "@/assets/church-logo.png";
 
 type ScanMode = "general" | "department";
 
+type ScanResult = {
+  name: string;
+  status: string;
+  programs: string[];
+  missedPrograms: string[];
+  whatsappNumber: string | null;
+  scanTime: string;
+  scanDate: string;
+};
+
 const ScanAttendance = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -20,7 +30,7 @@ const ScanAttendance = () => {
   const [scanMode, setScanMode] = useState<ScanMode>("general");
   const [selectedDeptId, setSelectedDeptId] = useState("");
   const [scanning, setScanning] = useState(false);
-  const [lastResult, setLastResult] = useState<{ name: string; status: string; programs: string[] } | null>(null);
+  const [lastResult, setLastResult] = useState<ScanResult | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scannerContainerRef = useRef<HTMLDivElement>(null);
 
