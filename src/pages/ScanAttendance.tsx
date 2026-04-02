@@ -7,11 +7,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Camera, CameraOff, CheckCircle2, XCircle, Loader2, QrCode } from "lucide-react";
+import { ArrowLeft, Camera, CameraOff, CheckCircle2, XCircle, Loader2, QrCode, MessageCircle } from "lucide-react";
 import { Html5Qrcode } from "html5-qrcode";
 import churchLogo from "@/assets/church-logo.png";
 
 type ScanMode = "general" | "department";
+
+type ScanResult = {
+  name: string;
+  status: string;
+  programs: string[];
+  missedPrograms: string[];
+  whatsappNumber: string | null;
+  scanTime: string;
+  scanDate: string;
+};
 
 const ScanAttendance = () => {
   const navigate = useNavigate();
@@ -20,7 +30,7 @@ const ScanAttendance = () => {
   const [scanMode, setScanMode] = useState<ScanMode>("general");
   const [selectedDeptId, setSelectedDeptId] = useState("");
   const [scanning, setScanning] = useState(false);
-  const [lastResult, setLastResult] = useState<{ name: string; status: string; programs: string[] } | null>(null);
+  const [lastResult, setLastResult] = useState<ScanResult | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scannerContainerRef = useRef<HTMLDivElement>(null);
 
@@ -57,11 +67,10 @@ const ScanAttendance = () => {
   });
 
   const markAttendance = useMutation({
-    mutationFn: async (qrCode: string) => {
-      // Find member by QR code
+    mutationFn: async (qrCode: string): Promise<ScanResult> => {
       const { data: member, error: memberErr } = await supabase
         .from("profiles")
-        .select("id, full_name")
+        .select("id, full_name, whatsapp_number, phone_number")
         .eq("qr_code", qrCode)
         .single();
       if (memberErr || !member) throw new Error("Member not found. Invalid QR code.");
@@ -69,10 +78,11 @@ const ScanAttendance = () => {
       const now = new Date();
       const today = now.toISOString().split("T")[0];
       const currentTime = now.toTimeString().slice(0, 8);
+      const scanTimeFormatted = now.toLocaleTimeString("en-NG", { hour: "2-digit", minute: "2-digit" });
+      const scanDateFormatted = now.toLocaleDateString("en-NG", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
 
       if (scanMode === "department") {
         if (!selectedDeptId) throw new Error("Please select a department first.");
-        // Verify member belongs to department
         const { data: deptMember } = await supabase
           .from("department_members")
           .select("id")
@@ -82,7 +92,6 @@ const ScanAttendance = () => {
         if (!deptMember) throw new Error(`Access Denied: ${member.full_name} is not a member of this department.`);
       }
 
-      // Get all active programs for today
       const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
       const todayDay = dayNames[now.getDay()];
       const { data: programs } = await supabase
@@ -94,9 +103,9 @@ const ScanAttendance = () => {
       if (!programs?.length) throw new Error("No programs scheduled for today.");
 
       const markedPrograms: string[] = [];
+      const missedPrograms: string[] = [];
 
       if (scanMode === "general") {
-        // Mark present for all programs where scan_time <= end_time
         for (const prog of programs) {
           if (currentTime <= prog.end_time) {
             const { error: insertErr } = await supabase.from("attendance_logs").upsert(
@@ -104,10 +113,11 @@ const ScanAttendance = () => {
               { onConflict: "profile_id,program_id,date" }
             );
             if (!insertErr) markedPrograms.push(prog.name);
+          } else {
+            missedPrograms.push(prog.name);
           }
         }
       } else {
-        // Department mode — mark for current active program
         const activeProgram = programs.find(p => currentTime >= p.start_time && currentTime <= p.end_time);
         if (activeProgram) {
           const { error: insertErr } = await supabase.from("attendance_logs").upsert(
@@ -116,13 +126,14 @@ const ScanAttendance = () => {
           );
           if (!insertErr) markedPrograms.push(activeProgram.name);
         }
+        programs.filter(p => p.id !== activeProgram?.id).forEach(p => missedPrograms.push(p.name));
       }
 
       if (!markedPrograms.length) {
-        return { name: member.full_name, status: "already_scanned", programs: [] };
+        return { name: member.full_name, status: "already_scanned", programs: [], missedPrograms: [], whatsappNumber: member.whatsapp_number || member.phone_number, scanTime: scanTimeFormatted, scanDate: scanDateFormatted };
       }
 
-      return { name: member.full_name, status: "success", programs: markedPrograms };
+      return { name: member.full_name, status: "success", programs: markedPrograms, missedPrograms, whatsappNumber: member.whatsapp_number || member.phone_number, scanTime: scanTimeFormatted, scanDate: scanDateFormatted };
     },
     onSuccess: (result) => {
       setLastResult(result);
@@ -134,10 +145,46 @@ const ScanAttendance = () => {
       }
     },
     onError: (e: any) => {
-      setLastResult({ name: "", status: "error", programs: [e.message] });
+      setLastResult({ name: "", status: "error", programs: [e.message], missedPrograms: [], whatsappNumber: null, scanTime: "", scanDate: "" });
       toast({ title: "Scan Error", description: e.message, variant: "destructive" });
     },
   });
+
+  const buildWhatsAppMessage = (result: ScanResult) => {
+    const presentList = result.programs.length > 0
+      ? result.programs.map(p => `- ${p}`).join("\n")
+      : "- None";
+    const missedList = result.missedPrograms.length > 0
+      ? result.missedPrograms.map(p => `- ${p}`).join("\n")
+      : "- None";
+
+    return `Beloved ${result.name},
+
+Your attendance has been recorded.
+Your presence is not a number but a blessing to the body of Christ.
+You are highly favored. Amen
+
+With love from
+Olawale Raymond
+Lead Pastor
+
+🕒 Time: ${result.scanTime}
+📅 Date: ${result.scanDate}
+✅ Present:
+${presentList}
+❌ Missed:
+${missedList}`;
+  };
+
+  const sendWhatsAppNotification = (result: ScanResult) => {
+    if (!result.whatsappNumber) {
+      toast({ title: "No WhatsApp number", description: "This member has no WhatsApp or phone number on file.", variant: "destructive" });
+      return;
+    }
+    const phone = result.whatsappNumber.replace(/[^0-9+]/g, "").replace(/^\+/, "");
+    const message = encodeURIComponent(buildWhatsAppMessage(result));
+    window.open(`https://wa.me/${phone}?text=${message}`, "_blank");
+  };
 
   const startScanner = useCallback(async () => {
     if (!scannerContainerRef.current) return;
@@ -240,19 +287,33 @@ const ScanAttendance = () => {
 
         {/* Last Result */}
         {lastResult && (
-          <Card className={`border-0 shadow-sm ${lastResult.status === "success" ? "bg-green-50 dark:bg-green-950/20" : lastResult.status === "error" ? "bg-red-50 dark:bg-red-950/20" : "bg-yellow-50 dark:bg-yellow-950/20"}`}>
+          <Card className={`border-0 shadow-sm ${lastResult.status === "success" ? "bg-green-50 dark:bg-green-950/20" : lastResult.status === "error" ? "bg-destructive/5" : "bg-yellow-50 dark:bg-yellow-950/20"}`}>
             <CardContent className="p-4 flex items-start gap-3">
               {lastResult.status === "success" ? (
                 <CheckCircle2 className="h-6 w-6 text-green-600 shrink-0 mt-0.5" />
               ) : (
                 <XCircle className="h-6 w-6 text-destructive shrink-0 mt-0.5" />
               )}
-              <div>
+              <div className="flex-1">
                 <p className="font-semibold">{lastResult.name || "Scan Result"}</p>
                 {lastResult.status === "success" && (
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {lastResult.programs.map(p => <Badge key={p} variant="secondary" className="text-xs">{p}</Badge>)}
-                  </div>
+                  <>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {lastResult.programs.map(p => <Badge key={p} variant="secondary" className="text-xs">{p}</Badge>)}
+                    </div>
+                    {lastResult.missedPrograms.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {lastResult.missedPrograms.map(p => <Badge key={p} variant="outline" className="text-xs text-destructive">{p} (missed)</Badge>)}
+                      </div>
+                    )}
+                    <Button
+                      size="sm"
+                      className="mt-3 bg-green-600 hover:bg-green-700 text-white"
+                      onClick={() => sendWhatsAppNotification(lastResult)}
+                    >
+                      <MessageCircle className="h-4 w-4 mr-1" /> Send WhatsApp Notification
+                    </Button>
+                  </>
                 )}
                 {lastResult.status === "error" && <p className="text-sm text-destructive">{lastResult.programs[0]}</p>}
                 {lastResult.status === "already_scanned" && <p className="text-sm text-muted-foreground">Already recorded today</p>}
