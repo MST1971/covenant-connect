@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Camera, CameraOff, CheckCircle2, XCircle, Loader2, QrCode } from "lucide-react";
+import { ArrowLeft, Camera, CameraOff, CheckCircle2, XCircle, Loader2, QrCode, MessageCircle } from "lucide-react";
 import { Html5Qrcode } from "html5-qrcode";
 import churchLogo from "@/assets/church-logo.png";
 
