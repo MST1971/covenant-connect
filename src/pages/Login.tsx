@@ -118,6 +118,15 @@ const Login = () => {
               <Button type="submit" disabled={loading} className="w-full gradient-gold text-accent-foreground font-semibold shadow-gold hover:opacity-90">
                 {loading ? "Please wait..." : isSignUp ? "Create Account" : "Sign In"}
               </Button>
+              {!isSignUp && (
+                <button
+                  type="button"
+                  onClick={() => navigate("/forgot-password")}
+                  className="text-sm text-secondary font-semibold hover:underline w-full text-right"
+                >
+                  Forgot password?
+                </button>
+              )}
             </form>
 
             <p className="text-center text-sm text-muted-foreground">
