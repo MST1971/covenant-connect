@@ -193,12 +193,13 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent className="space-y-2">
                 {[
-                  { label: "Add New Member", icon: UserPlus, path: "/members/register" },
-                  { label: "Scan Attendance", icon: QrCode, path: "/attendance/scan" },
-                  { label: "Record Attendance", icon: Shield, path: "/attendance/reports" },
-                  { label: "Manage Programs", icon: Calendar, path: "/programs" },
-                  { label: "Departments", icon: Building2, path: "/departments" },
-                ].map((action) => (
+                  { label: "Add New Member", icon: UserPlus, path: "/members/register", perm: "members.register" },
+                  { label: "Scan Attendance", icon: QrCode, path: "/attendance/scan", perm: "attendance.scan" },
+                  { label: "Record Attendance", icon: Shield, path: "/attendance/reports", perm: "attendance.reports" },
+                  { label: "Manage Programs", icon: Calendar, path: "/programs", perm: "programs.manage" },
+                  { label: "Departments", icon: Building2, path: "/departments", perm: "departments" },
+                  ...(isSuperAdmin ? [{ label: "Manage Roles", icon: UserCog, path: "/roles", perm: "roles.manage" }] : []),
+                ].filter((a) => hasPermission(a.perm)).map((action) => (
                   <button
                     key={action.label}
                     onClick={() => action.path && navigate(action.path)}
