@@ -1,27 +1,29 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import {
   Users, Calendar, MessageSquare, Heart, BarChart3, Settings,
   ChevronRight, TrendingUp, UserPlus, Clock, Menu, X, LogOut,
-  Home, BookOpen, Shield, Bell, FileText, QrCode, Building2
+  Home, BookOpen, Shield, Bell, FileText, QrCode, Building2, UserCog
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import churchLogo from "@/assets/church-logo.png";
 
-const navItems = [
-  { icon: Home, label: "Dashboard", path: "/dashboard", active: true },
-  { icon: Users, label: "Members", path: "/members" },
-  { icon: UserPlus, label: "Visitors", path: "" },
-  { icon: Building2, label: "Departments", path: "/departments" },
-  { icon: Calendar, label: "Programs", path: "/programs" },
-  { icon: QrCode, label: "Scan Attendance", path: "/attendance/scan" },
-  { icon: Shield, label: "Attendance Reports", path: "/attendance/reports" },
-  { icon: MessageSquare, label: "Messages", path: "" },
-  { icon: Heart, label: "Giving", path: "" },
-  { icon: BarChart3, label: "Reports", path: "" },
-  { icon: Settings, label: "Settings", path: "" },
+const allNavItems = [
+  { icon: Home, label: "Dashboard", path: "/dashboard", active: true, permission: "dashboard" },
+  { icon: Users, label: "Members", path: "/members", permission: "members" },
+  { icon: UserPlus, label: "Visitors", path: "", permission: "visitors" },
+  { icon: Building2, label: "Departments", path: "/departments", permission: "departments" },
+  { icon: Calendar, label: "Programs", path: "/programs", permission: "programs" },
+  { icon: QrCode, label: "Scan Attendance", path: "/attendance/scan", permission: "attendance.scan" },
+  { icon: Shield, label: "Attendance Reports", path: "/attendance/reports", permission: "attendance.reports" },
+  { icon: MessageSquare, label: "Messages", path: "", permission: "messages" },
+  { icon: Heart, label: "Giving", path: "", permission: "giving" },
+  { icon: BarChart3, label: "Reports", path: "", permission: "reports" },
+  { icon: UserCog, label: "Role Management", path: "/roles", permission: "roles.manage" },
+  { icon: Settings, label: "Settings", path: "", permission: "settings" },
 ];
 
 const stats = [
@@ -43,6 +45,22 @@ const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { isAdmin, isLoading: roleLoading, hasPermission, isSuperAdmin } = useUserRole();
+
+  // Redirect non-admin users to member dashboard
+  if (!roleLoading && !isAdmin) {
+    return <Navigate to="/my-dashboard" replace />;
+  }
+
+  if (roleLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin h-8 w-8 border-4 border-secondary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  const navItems = allNavItems.filter((item) => hasPermission(item.permission));
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -175,12 +193,13 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent className="space-y-2">
                 {[
-                  { label: "Add New Member", icon: UserPlus, path: "/members/register" },
-                  { label: "Scan Attendance", icon: QrCode, path: "/attendance/scan" },
-                  { label: "Record Attendance", icon: Shield, path: "/attendance/reports" },
-                  { label: "Manage Programs", icon: Calendar, path: "/programs" },
-                  { label: "Departments", icon: Building2, path: "/departments" },
-                ].map((action) => (
+                  { label: "Add New Member", icon: UserPlus, path: "/members/register", perm: "members.register" },
+                  { label: "Scan Attendance", icon: QrCode, path: "/attendance/scan", perm: "attendance.scan" },
+                  { label: "Record Attendance", icon: Shield, path: "/attendance/reports", perm: "attendance.reports" },
+                  { label: "Manage Programs", icon: Calendar, path: "/programs", perm: "programs.manage" },
+                  { label: "Departments", icon: Building2, path: "/departments", perm: "departments" },
+                  ...(isSuperAdmin ? [{ label: "Manage Roles", icon: UserCog, path: "/roles", perm: "roles.manage" }] : []),
+                ].filter((a) => hasPermission(a.perm)).map((action) => (
                   <button
                     key={action.label}
                     onClick={() => action.path && navigate(action.path)}
