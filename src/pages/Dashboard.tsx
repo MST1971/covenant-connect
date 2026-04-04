@@ -45,6 +45,22 @@ const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { isAdmin, isLoading: roleLoading, hasPermission, isSuperAdmin } = useUserRole();
+
+  // Redirect non-admin users to member dashboard
+  if (!roleLoading && !isAdmin) {
+    return <Navigate to="/my-dashboard" replace />;
+  }
+
+  if (roleLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin h-8 w-8 border-4 border-secondary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  const navItems = allNavItems.filter((item) => hasPermission(item.permission));
 
   return (
     <div className="min-h-screen bg-background flex">
