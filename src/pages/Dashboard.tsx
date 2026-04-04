@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import {
   Users, Calendar, MessageSquare, Heart, BarChart3, Settings,
   ChevronRight, TrendingUp, UserPlus, Clock, Menu, X, LogOut,
-  Home, BookOpen, Shield, Bell, FileText, QrCode, Building2
+  Home, BookOpen, Shield, Bell, FileText, QrCode, Building2, UserCog
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
