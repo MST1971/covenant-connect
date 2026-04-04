@@ -11,18 +11,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import churchLogo from "@/assets/church-logo.png";
 
-const navItems = [
-  { icon: Home, label: "Dashboard", path: "/dashboard", active: true },
-  { icon: Users, label: "Members", path: "/members" },
-  { icon: UserPlus, label: "Visitors", path: "" },
-  { icon: Building2, label: "Departments", path: "/departments" },
-  { icon: Calendar, label: "Programs", path: "/programs" },
-  { icon: QrCode, label: "Scan Attendance", path: "/attendance/scan" },
-  { icon: Shield, label: "Attendance Reports", path: "/attendance/reports" },
-  { icon: MessageSquare, label: "Messages", path: "" },
-  { icon: Heart, label: "Giving", path: "" },
-  { icon: BarChart3, label: "Reports", path: "" },
-  { icon: Settings, label: "Settings", path: "" },
+const allNavItems = [
+  { icon: Home, label: "Dashboard", path: "/dashboard", active: true, permission: "dashboard" },
+  { icon: Users, label: "Members", path: "/members", permission: "members" },
+  { icon: UserPlus, label: "Visitors", path: "", permission: "visitors" },
+  { icon: Building2, label: "Departments", path: "/departments", permission: "departments" },
+  { icon: Calendar, label: "Programs", path: "/programs", permission: "programs" },
+  { icon: QrCode, label: "Scan Attendance", path: "/attendance/scan", permission: "attendance.scan" },
+  { icon: Shield, label: "Attendance Reports", path: "/attendance/reports", permission: "attendance.reports" },
+  { icon: MessageSquare, label: "Messages", path: "", permission: "messages" },
+  { icon: Heart, label: "Giving", path: "", permission: "giving" },
+  { icon: BarChart3, label: "Reports", path: "", permission: "reports" },
+  { icon: UserCog, label: "Role Management", path: "/roles", permission: "roles.manage" },
+  { icon: Settings, label: "Settings", path: "", permission: "settings" },
 ];
 
 const stats = [
