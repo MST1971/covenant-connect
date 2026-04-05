@@ -38,6 +38,8 @@ const MembersList = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const qc = useQueryClient();
+  const { isSuperAdmin, hasRole } = useUserRole();
+  const canGenerateId = isSuperAdmin || hasRole("pastor");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("All Departments");
@@ -55,6 +57,37 @@ const MembersList = () => {
       qc.invalidateQueries({ queryKey: ["profiles"] });
       if (selectedMember) setSelectedMember({ ...selectedMember, qr_code: qrCode } as any);
       toast({ title: "QR Code Generated" });
+    },
+    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+
+  const generateMemberCode = useMutation({
+    mutationFn: async ({ memberId, type }: { memberId: string; type: "family" | "single" }) => {
+      const prefix = type === "family" ? "CBC/Suleja/F" : "CBC/Suleja/S";
+      // Get current counter
+      const { data: counter, error: cErr } = await supabase
+        .from("member_id_counters")
+        .select("*")
+        .eq("counter_type", type)
+        .single();
+      if (cErr) throw cErr;
+      const nextNum = (counter.last_number || 0) + 1;
+      const code = `${prefix}/${String(nextNum).padStart(3, "0")}`;
+      // Update counter
+      const { error: uErr } = await supabase
+        .from("member_id_counters")
+        .update({ last_number: nextNum, updated_at: new Date().toISOString() })
+        .eq("counter_type", type);
+      if (uErr) throw uErr;
+      // Set member code
+      const { error: pErr } = await supabase.from("profiles").update({ member_code: code } as any).eq("id", memberId);
+      if (pErr) throw pErr;
+      return code;
+    },
+    onSuccess: (code) => {
+      qc.invalidateQueries({ queryKey: ["profiles"] });
+      if (selectedMember) setSelectedMember({ ...selectedMember, member_code: code } as any);
+      toast({ title: "Member ID Generated", description: code });
     },
     onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
