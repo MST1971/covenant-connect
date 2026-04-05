@@ -220,9 +220,82 @@ export type Database = {
           },
         ]
       }
+      giving_records: {
+        Row: {
+          amount: number
+          created_at: string
+          date: string
+          giving_type: string
+          id: string
+          notes: string | null
+          payment_method: string | null
+          profile_id: string
+          recorded_by: string | null
+          reference: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          date?: string
+          giving_type?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          profile_id: string
+          recorded_by?: string | null
+          reference?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          date?: string
+          giving_type?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          profile_id?: string
+          recorded_by?: string | null
+          reference?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "giving_records_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      member_id_counters: {
+        Row: {
+          counter_type: string
+          id: string
+          last_number: number
+          updated_at: string
+        }
+        Insert: {
+          counter_type: string
+          id?: string
+          last_number?: number
+          updated_at?: string
+        }
+        Update: {
+          counter_type?: string
+          id?: string
+          last_number?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
+          birth_day: number | null
+          birth_month: number | null
           city: string | null
           country: string | null
           created_at: string
@@ -238,6 +311,8 @@ export type Database = {
           marital_status:
             | Database["public"]["Enums"]["marital_status_type"]
             | null
+          marriage_date: string | null
+          member_code: string | null
           membership_status:
             | Database["public"]["Enums"]["membership_status"]
             | null
@@ -247,6 +322,7 @@ export type Database = {
           photo_url: string | null
           qr_code: string | null
           skills: string | null
+          spouse_name: string | null
           state: string | null
           updated_at: string
           user_id: string | null
@@ -254,6 +330,8 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          birth_day?: number | null
+          birth_month?: number | null
           city?: string | null
           country?: string | null
           created_at?: string
@@ -269,6 +347,8 @@ export type Database = {
           marital_status?:
             | Database["public"]["Enums"]["marital_status_type"]
             | null
+          marriage_date?: string | null
+          member_code?: string | null
           membership_status?:
             | Database["public"]["Enums"]["membership_status"]
             | null
@@ -278,6 +358,7 @@ export type Database = {
           photo_url?: string | null
           qr_code?: string | null
           skills?: string | null
+          spouse_name?: string | null
           state?: string | null
           updated_at?: string
           user_id?: string | null
@@ -285,6 +366,8 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          birth_day?: number | null
+          birth_month?: number | null
           city?: string | null
           country?: string | null
           created_at?: string
@@ -300,6 +383,8 @@ export type Database = {
           marital_status?:
             | Database["public"]["Enums"]["marital_status_type"]
             | null
+          marriage_date?: string | null
+          member_code?: string | null
           membership_status?:
             | Database["public"]["Enums"]["membership_status"]
             | null
@@ -309,6 +394,7 @@ export type Database = {
           photo_url?: string | null
           qr_code?: string | null
           skills?: string | null
+          spouse_name?: string | null
           state?: string | null
           updated_at?: string
           user_id?: string | null
@@ -416,6 +502,94 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      visitors: {
+        Row: {
+          address: string | null
+          age_range: string | null
+          assigned_to: string | null
+          converted_profile_id: string | null
+          converted_to_member: boolean
+          created_at: string
+          email: string | null
+          follow_up_date: string | null
+          follow_up_notes: string | null
+          follow_up_status: string
+          full_name: string
+          gender: string | null
+          id: string
+          invited_by_member_id: string | null
+          invited_by_name: string | null
+          phone_number: string | null
+          program_attended: string | null
+          updated_at: string
+          visit_date: string
+        }
+        Insert: {
+          address?: string | null
+          age_range?: string | null
+          assigned_to?: string | null
+          converted_profile_id?: string | null
+          converted_to_member?: boolean
+          created_at?: string
+          email?: string | null
+          follow_up_date?: string | null
+          follow_up_notes?: string | null
+          follow_up_status?: string
+          full_name: string
+          gender?: string | null
+          id?: string
+          invited_by_member_id?: string | null
+          invited_by_name?: string | null
+          phone_number?: string | null
+          program_attended?: string | null
+          updated_at?: string
+          visit_date?: string
+        }
+        Update: {
+          address?: string | null
+          age_range?: string | null
+          assigned_to?: string | null
+          converted_profile_id?: string | null
+          converted_to_member?: boolean
+          created_at?: string
+          email?: string | null
+          follow_up_date?: string | null
+          follow_up_notes?: string | null
+          follow_up_status?: string
+          full_name?: string
+          gender?: string | null
+          id?: string
+          invited_by_member_id?: string | null
+          invited_by_name?: string | null
+          phone_number?: string | null
+          program_attended?: string | null
+          updated_at?: string
+          visit_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitors_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitors_converted_profile_id_fkey"
+            columns: ["converted_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitors_invited_by_member_id_fkey"
+            columns: ["invited_by_member_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

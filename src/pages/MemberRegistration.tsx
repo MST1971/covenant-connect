@@ -1,8 +1,10 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,9 +15,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, User, Heart, Users, Phone, Camera, Save, Loader2 } from "lucide-react";
 import churchLogo from "@/assets/church-logo.png";
 
+const MONTHS = [
+  "January","February","March","April","May","June",
+  "July","August","September","October","November","December"
+];
+
 const MemberRegistration = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get("edit");
   const { user } = useAuth();
+  const { isAdmin } = useUserRole();
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("personal");
@@ -23,36 +33,87 @@ const MemberRegistration = () => {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   const [form, setForm] = useState({
-    full_name: "",
-    email: "",
-    phone_number: "",
-    whatsapp_number: "",
-    gender: "",
-    date_of_birth: "",
-    marital_status: "",
-    occupation: "",
-    education: "",
-    address: "",
-    city: "",
-    state: "Niger",
-    country: "Nigeria",
-    membership_status: "visitor",
-    skills: "",
+    full_name: "", email: "", phone_number: "", whatsapp_number: "",
+    gender: "", birth_month: "", birth_day: "", birth_year: "",
+    marital_status: "", spouse_name: "", marriage_date: "",
+    occupation: "", education: "", address: "", city: "",
+    state: "Niger", country: "Nigeria", membership_status: "visitor", skills: "",
     // Spiritual
-    salvation_date: "",
-    baptism_date: "",
-    date_joined: "",
-    department: "",
-    ministry_involvement: "",
-    spiritual_gifts: "",
+    salvation_date: "", baptism_date: "", date_joined: "",
+    department: "", ministry_involvement: "", spiritual_gifts: "",
     // Emergency
-    emergency_contact_name: "",
-    emergency_contact_phone: "",
-    health_notes: "",
+    emergency_contact_name: "", emergency_contact_phone: "", health_notes: "",
+    // Family linking
+    family_name: "", family_relationship: "",
   });
 
-  const update = (field: string, value: string) =>
-    setForm((prev) => ({ ...prev, [field]: value }));
+  // Load existing profile if editing
+  const { data: existingProfile } = useQuery({
+    queryKey: ["edit-profile", editId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("profiles").select("*").eq("id", editId!).single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!editId,
+  });
+
+  const { data: existingSpiritual } = useQuery({
+    queryKey: ["edit-spiritual", editId],
+    queryFn: async () => {
+      const { data } = await supabase.from("spiritual_info").select("*").eq("profile_id", editId!).maybeSingle();
+      return data;
+    },
+    enabled: !!editId,
+  });
+
+  useEffect(() => {
+    if (existingProfile) {
+      const dob = existingProfile.date_of_birth ? new Date(existingProfile.date_of_birth) : null;
+      setForm(prev => ({
+        ...prev,
+        full_name: existingProfile.full_name || "",
+        email: existingProfile.email || "",
+        phone_number: existingProfile.phone_number || "",
+        whatsapp_number: existingProfile.whatsapp_number || "",
+        gender: existingProfile.gender || "",
+        birth_month: existingProfile.birth_month?.toString() || (dob ? (dob.getMonth() + 1).toString() : ""),
+        birth_day: existingProfile.birth_day?.toString() || (dob ? dob.getDate().toString() : ""),
+        birth_year: dob ? dob.getFullYear().toString() : "",
+        marital_status: existingProfile.marital_status || "",
+        spouse_name: (existingProfile as any).spouse_name || "",
+        marriage_date: (existingProfile as any).marriage_date || "",
+        occupation: existingProfile.occupation || "",
+        education: existingProfile.education || "",
+        address: existingProfile.address || "",
+        city: existingProfile.city || "",
+        state: existingProfile.state || "Niger",
+        country: existingProfile.country || "Nigeria",
+        membership_status: existingProfile.membership_status || "visitor",
+        skills: existingProfile.skills || "",
+        emergency_contact_name: existingProfile.emergency_contact_name || "",
+        emergency_contact_phone: existingProfile.emergency_contact_phone || "",
+        health_notes: existingProfile.health_notes || "",
+      }));
+      if (existingProfile.photo_url) setPhotoPreview(existingProfile.photo_url);
+    }
+  }, [existingProfile]);
+
+  useEffect(() => {
+    if (existingSpiritual) {
+      setForm(prev => ({
+        ...prev,
+        salvation_date: existingSpiritual.salvation_date || "",
+        baptism_date: existingSpiritual.baptism_date || "",
+        date_joined: existingSpiritual.date_joined || "",
+        department: existingSpiritual.department || "",
+        ministry_involvement: existingSpiritual.ministry_involvement || "",
+        spiritual_gifts: existingSpiritual.spiritual_gifts || "",
+      }));
+    }
+  }, [existingSpiritual]);
+
+  const update = (field: string, value: string) => setForm(prev => ({ ...prev, [field]: value }));
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -66,82 +127,131 @@ const MemberRegistration = () => {
     }
   };
 
+  const needsMarriageInfo = form.marital_status === "married" || form.marital_status === "widowed";
+
   const handleSubmit = async () => {
     if (!form.full_name.trim()) {
-      toast({ title: "Name required", description: "Please enter the member's full name.", variant: "destructive" });
+      toast({ title: "Name required", variant: "destructive" });
+      setActiveTab("personal");
+      return;
+    }
+    if (!form.birth_month || !form.birth_day) {
+      toast({ title: "Birth month and day are required", variant: "destructive" });
+      setActiveTab("personal");
+      return;
+    }
+    if (needsMarriageInfo && !form.marriage_date) {
+      toast({ title: "Marriage date is required for married/widowed members", variant: "destructive" });
+      setActiveTab("personal");
+      return;
+    }
+    if (needsMarriageInfo && !form.spouse_name.trim()) {
+      toast({ title: "Spouse name is required", variant: "destructive" });
       setActiveTab("personal");
       return;
     }
 
     setSaving(true);
     try {
-      let photo_url: string | null = null;
-
-      // Upload photo if selected
+      let photo_url: string | null = existingProfile?.photo_url || null;
       if (photoFile) {
         const ext = photoFile.name.split(".").pop();
         const path = `${crypto.randomUUID()}.${ext}`;
-        const { error: uploadErr } = await supabase.storage
-          .from("member-photos")
-          .upload(path, photoFile);
+        const { error: uploadErr } = await supabase.storage.from("member-photos").upload(path, photoFile);
         if (uploadErr) throw uploadErr;
-        const { data: urlData } = supabase.storage
-          .from("member-photos")
-          .getPublicUrl(path);
-        photo_url = urlData.publicUrl;
+        photo_url = supabase.storage.from("member-photos").getPublicUrl(path).data.publicUrl;
       }
 
-      // Insert profile
-      const { data: profile, error: profileErr } = await supabase
-        .from("profiles")
-        .insert({
-          full_name: form.full_name.trim(),
-          email: form.email.trim() || null,
-          phone_number: form.phone_number.trim() || null,
-          whatsapp_number: form.whatsapp_number.trim() || null,
-          gender: (form.gender || null) as "male" | "female" | null,
-          date_of_birth: form.date_of_birth || null,
-          marital_status: (form.marital_status || null) as "single" | "married" | "divorced" | "widowed" | null,
-          occupation: form.occupation.trim() || null,
-          education: form.education.trim() || null,
-          address: form.address.trim() || null,
-          city: form.city.trim() || null,
-          state: form.state.trim() || null,
-          country: form.country.trim() || null,
-          membership_status: (form.membership_status || "visitor") as "member" | "visitor" | "worker",
-          skills: form.skills.trim() || null,
-          emergency_contact_name: form.emergency_contact_name.trim() || null,
-          emergency_contact_phone: form.emergency_contact_phone.trim() || null,
-          health_notes: form.health_notes.trim() || null,
-          photo_url,
-        })
-        .select("id")
-        .single();
+      // Build date_of_birth if year is provided
+      const date_of_birth = form.birth_year
+        ? `${form.birth_year}-${form.birth_month.padStart(2, "0")}-${form.birth_day.padStart(2, "0")}`
+        : null;
 
-      if (profileErr) throw profileErr;
+      const profileData: any = {
+        full_name: form.full_name.trim(),
+        email: form.email.trim() || null,
+        phone_number: form.phone_number.trim() || null,
+        whatsapp_number: form.whatsapp_number.trim() || null,
+        gender: (form.gender || null) as any,
+        date_of_birth,
+        birth_month: parseInt(form.birth_month) || null,
+        birth_day: parseInt(form.birth_day) || null,
+        marital_status: (form.marital_status || null) as any,
+        spouse_name: needsMarriageInfo ? form.spouse_name.trim() || null : null,
+        marriage_date: needsMarriageInfo ? form.marriage_date || null : null,
+        occupation: form.occupation.trim() || null,
+        education: form.education.trim() || null,
+        address: form.address.trim() || null,
+        city: form.city.trim() || null,
+        state: form.state.trim() || null,
+        country: form.country.trim() || null,
+        membership_status: (form.membership_status || "visitor") as any,
+        skills: form.skills.trim() || null,
+        emergency_contact_name: form.emergency_contact_name.trim() || null,
+        emergency_contact_phone: form.emergency_contact_phone.trim() || null,
+        health_notes: form.health_notes.trim() || null,
+        photo_url,
+      };
 
-      // Insert spiritual info if any field is filled
-      const hasSpiritualInfo =
-        form.salvation_date || form.baptism_date || form.date_joined ||
-        form.department || form.ministry_involvement || form.spiritual_gifts;
+      let profileId = editId;
 
-      if (hasSpiritualInfo && profile) {
-        const { error: spirErr } = await supabase
-          .from("spiritual_info")
-          .insert({
-            profile_id: profile.id,
-            salvation_date: form.salvation_date || null,
-            baptism_date: form.baptism_date || null,
-            date_joined: form.date_joined || null,
-            department: form.department.trim() || null,
-            ministry_involvement: form.ministry_involvement.trim() || null,
-            spiritual_gifts: form.spiritual_gifts.trim() || null,
-          });
-        if (spirErr) throw spirErr;
+      if (editId) {
+        const { error } = await supabase.from("profiles").update(profileData).eq("id", editId);
+        if (error) throw error;
+      } else {
+        const { data: profile, error } = await supabase.from("profiles").insert(profileData).select("id").single();
+        if (error) throw error;
+        profileId = profile.id;
       }
 
-      toast({ title: "Member registered!", description: `${form.full_name} has been added successfully.` });
-      navigate("/dashboard");
+      // Spiritual info
+      const hasSpiritualInfo = form.salvation_date || form.baptism_date || form.date_joined || form.department || form.ministry_involvement || form.spiritual_gifts;
+      if (hasSpiritualInfo && profileId) {
+        const spirData = {
+          profile_id: profileId,
+          salvation_date: form.salvation_date || null,
+          baptism_date: form.baptism_date || null,
+          date_joined: form.date_joined || null,
+          department: form.department.trim() || null,
+          ministry_involvement: form.ministry_involvement.trim() || null,
+          spiritual_gifts: form.spiritual_gifts.trim() || null,
+        };
+        if (editId && existingSpiritual) {
+          await supabase.from("spiritual_info").update(spirData).eq("profile_id", editId);
+        } else {
+          await supabase.from("spiritual_info").insert(spirData);
+        }
+      }
+
+      // Family linking (member self-service)
+      if (!editId && form.family_name.trim() && form.family_relationship.trim() && profileId) {
+        // Create or find family
+        const { data: existingFamily } = await supabase
+          .from("families")
+          .select("id")
+          .eq("family_name", form.family_name.trim())
+          .maybeSingle();
+
+        let familyId = existingFamily?.id;
+        if (!familyId) {
+          const { data: newFamily, error: famErr } = await supabase
+            .from("families")
+            .insert({ family_name: form.family_name.trim() })
+            .select("id")
+            .single();
+          if (famErr) throw famErr;
+          familyId = newFamily.id;
+        }
+
+        await supabase.from("family_members").insert({
+          family_id: familyId,
+          profile_id: profileId,
+          relationship: form.family_relationship.trim(),
+        });
+      }
+
+      toast({ title: editId ? "Profile updated!" : "Member registered!", description: `${form.full_name} has been ${editId ? "updated" : "added"} successfully.` });
+      navigate(isAdmin ? "/dashboard" : "/my-dashboard");
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
@@ -149,17 +259,20 @@ const MemberRegistration = () => {
     }
   };
 
+  const isEditing = !!editId;
+  const pageTitle = isEditing ? "Update Profile" : "Register New Member";
+  const pageDesc = isEditing ? "Update member information" : "Add a member to the church database";
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b px-4 lg:px-8 py-4 flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <img src={churchLogo} alt="CBC" className="h-8 w-8 rounded-full" />
         <div>
-          <h1 className="text-lg font-bold">Register New Member</h1>
-          <p className="text-xs text-muted-foreground">Add a member to the church database</p>
+          <h1 className="text-lg font-bold">{pageTitle}</h1>
+          <p className="text-xs text-muted-foreground">{pageDesc}</p>
         </div>
       </header>
 
@@ -231,10 +344,35 @@ const MemberRegistration = () => {
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {/* Birthday: Month & Day required, Year optional */}
                   <div className="space-y-1.5">
-                    <Label htmlFor="date_of_birth">Date of Birth</Label>
-                    <Input id="date_of_birth" type="date" value={form.date_of_birth} onChange={(e) => update("date_of_birth", e.target.value)} />
+                    <Label>Birth Month *</Label>
+                    <Select value={form.birth_month} onValueChange={(v) => update("birth_month", v)}>
+                      <SelectTrigger><SelectValue placeholder="Month" /></SelectTrigger>
+                      <SelectContent>
+                        {MONTHS.map((m, i) => (
+                          <SelectItem key={m} value={(i + 1).toString()}>{m}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
+                  <div className="space-y-1.5">
+                    <Label>Birth Day *</Label>
+                    <Select value={form.birth_day} onValueChange={(v) => update("birth_day", v)}>
+                      <SelectTrigger><SelectValue placeholder="Day" /></SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 31 }, (_, i) => (
+                          <SelectItem key={i + 1} value={(i + 1).toString()}>{i + 1}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="birth_year">Birth Year (optional)</Label>
+                    <Input id="birth_year" type="number" min="1920" max={new Date().getFullYear()} value={form.birth_year} onChange={(e) => update("birth_year", e.target.value)} placeholder="e.g. 1990" />
+                  </div>
+
                   <div className="space-y-1.5">
                     <Label>Marital Status</Label>
                     <Select value={form.marital_status} onValueChange={(v) => update("marital_status", v)}>
@@ -247,17 +385,34 @@ const MemberRegistration = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-1.5">
-                    <Label>Membership Status</Label>
-                    <Select value={form.membership_status} onValueChange={(v) => update("membership_status", v)}>
-                      <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="visitor">Visitor</SelectItem>
-                        <SelectItem value="member">Member</SelectItem>
-                        <SelectItem value="worker">Worker</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+
+                  {/* Spouse & Marriage date (conditional) */}
+                  {needsMarriageInfo && (
+                    <>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="spouse_name">Spouse Name *</Label>
+                        <Input id="spouse_name" value={form.spouse_name} onChange={(e) => update("spouse_name", e.target.value)} placeholder="Full name of spouse" maxLength={100} />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="marriage_date">Marriage Date *</Label>
+                        <Input id="marriage_date" type="date" value={form.marriage_date} onChange={(e) => update("marriage_date", e.target.value)} />
+                      </div>
+                    </>
+                  )}
+
+                  {!isEditing && (
+                    <div className="space-y-1.5">
+                      <Label>Membership Status</Label>
+                      <Select value={form.membership_status} onValueChange={(v) => update("membership_status", v)}>
+                        <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="visitor">Visitor</SelectItem>
+                          <SelectItem value="member">Member</SelectItem>
+                          <SelectItem value="worker">Worker</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   <div className="space-y-1.5">
                     <Label htmlFor="occupation">Occupation</Label>
                     <Input id="occupation" value={form.occupation} onChange={(e) => update("occupation", e.target.value)} placeholder="e.g. Teacher" maxLength={100} />
@@ -295,9 +450,7 @@ const MemberRegistration = () => {
           {/* Spiritual Info */}
           <TabsContent value="spiritual">
             <Card className="border-0 shadow-sm">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg">Spiritual Information</CardTitle>
-              </CardHeader>
+              <CardHeader className="pb-4"><CardTitle className="text-lg">Spiritual Information</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
@@ -317,35 +470,24 @@ const MemberRegistration = () => {
                     <Select value={form.department} onValueChange={(v) => update("department", v)}>
                       <SelectTrigger><SelectValue placeholder="Select department" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="choir">Choir</SelectItem>
-                        <SelectItem value="ushering">Ushering</SelectItem>
-                        <SelectItem value="children">Children's Ministry</SelectItem>
-                        <SelectItem value="youth">Youth Ministry</SelectItem>
-                        <SelectItem value="men">Men's Fellowship</SelectItem>
-                        <SelectItem value="women">Women's Fellowship</SelectItem>
-                        <SelectItem value="prayer">Prayer Ministry</SelectItem>
-                        <SelectItem value="media">Media / Tech</SelectItem>
-                        <SelectItem value="welfare">Welfare</SelectItem>
-                        <SelectItem value="evangelism">Evangelism</SelectItem>
-                        <SelectItem value="sunday_school">Sunday School</SelectItem>
-                        <SelectItem value="protocol">Protocol</SelectItem>
+                        {["choir","ushering","children","youth","men","women","prayer","media","welfare","evangelism","sunday_school","protocol"].map(d => (
+                          <SelectItem key={d} value={d}>{d.replace("_"," ").replace(/\b\w/g,l=>l.toUpperCase())}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="sm:col-span-2 space-y-1.5">
                     <Label htmlFor="ministry_involvement">Ministry Involvement</Label>
-                    <Textarea id="ministry_involvement" value={form.ministry_involvement} onChange={(e) => update("ministry_involvement", e.target.value)} placeholder="Describe current ministry roles and involvement" maxLength={500} rows={2} />
+                    <Textarea id="ministry_involvement" value={form.ministry_involvement} onChange={(e) => update("ministry_involvement", e.target.value)} placeholder="Describe current ministry roles" maxLength={500} rows={2} />
                   </div>
                   <div className="sm:col-span-2 space-y-1.5">
                     <Label htmlFor="spiritual_gifts">Spiritual Gifts</Label>
-                    <Textarea id="spiritual_gifts" value={form.spiritual_gifts} onChange={(e) => update("spiritual_gifts", e.target.value)} placeholder="e.g. Teaching, Prophecy, Giving, Hospitality" maxLength={500} rows={2} />
+                    <Textarea id="spiritual_gifts" value={form.spiritual_gifts} onChange={(e) => update("spiritual_gifts", e.target.value)} placeholder="e.g. Teaching, Prophecy, Giving" maxLength={500} rows={2} />
                   </div>
                 </div>
                 <div className="flex justify-between pt-2">
                   <Button variant="outline" onClick={() => setActiveTab("personal")}>Back</Button>
-                  <Button onClick={() => setActiveTab("family")} className="gradient-gold text-accent-foreground font-semibold shadow-gold hover:opacity-90">
-                    Next: Family
-                  </Button>
+                  <Button onClick={() => setActiveTab("family")} className="gradient-gold text-accent-foreground font-semibold shadow-gold hover:opacity-90">Next: Family</Button>
                 </div>
               </CardContent>
             </Card>
@@ -357,24 +499,41 @@ const MemberRegistration = () => {
               <CardHeader className="pb-4">
                 <CardTitle className="text-lg">Family Information</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Family linking can be configured after registration from the Members page.
+                  {isEditing
+                    ? "To change an existing family link, please contact a Pastor or Super Admin."
+                    : "Link yourself to a family unit. You can create a new family or join an existing one."}
                 </p>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="rounded-xl bg-muted/50 p-6 text-center space-y-2">
-                  <Users className="h-12 w-12 mx-auto text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">
-                    After registering this member, you can link them to an existing family or create a new family unit from the member's profile page.
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Family relationships include: Head, Spouse, Child, Sibling, Parent, Other
-                  </p>
-                </div>
+                {!isEditing ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="sm:col-span-2 space-y-1.5">
+                      <Label htmlFor="family_name">Family Name</Label>
+                      <Input id="family_name" value={form.family_name} onChange={(e) => update("family_name", e.target.value)} placeholder="e.g. The Ibrahims" maxLength={100} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Your Relationship</Label>
+                      <Select value={form.family_relationship} onValueChange={(v) => update("family_relationship", v)}>
+                        <SelectTrigger><SelectValue placeholder="Select relationship" /></SelectTrigger>
+                        <SelectContent>
+                          {["Head","Spouse","Child","Sibling","Parent","Other"].map(r => (
+                            <SelectItem key={r} value={r.toLowerCase()}>{r}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-xl bg-muted/50 p-6 text-center space-y-2">
+                    <Users className="h-12 w-12 mx-auto text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      Existing family links can only be changed by a Pastor or Super Admin.
+                    </p>
+                  </div>
+                )}
                 <div className="flex justify-between pt-2">
                   <Button variant="outline" onClick={() => setActiveTab("spiritual")}>Back</Button>
-                  <Button onClick={() => setActiveTab("emergency")} className="gradient-gold text-accent-foreground font-semibold shadow-gold hover:opacity-90">
-                    Next: Emergency
-                  </Button>
+                  <Button onClick={() => setActiveTab("emergency")} className="gradient-gold text-accent-foreground font-semibold shadow-gold hover:opacity-90">Next: Emergency</Button>
                 </div>
               </CardContent>
             </Card>
@@ -383,9 +542,7 @@ const MemberRegistration = () => {
           {/* Emergency Contact */}
           <TabsContent value="emergency">
             <Card className="border-0 shadow-sm">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg">Emergency Contact & Health</CardTitle>
-              </CardHeader>
+              <CardHeader className="pb-4"><CardTitle className="text-lg">Emergency Contact & Health</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
@@ -398,14 +555,14 @@ const MemberRegistration = () => {
                   </div>
                   <div className="sm:col-span-2 space-y-1.5">
                     <Label htmlFor="health_notes">Health Notes</Label>
-                    <Textarea id="health_notes" value={form.health_notes} onChange={(e) => update("health_notes", e.target.value)} placeholder="Any health conditions, allergies, or special needs to be aware of" maxLength={1000} rows={3} />
+                    <Textarea id="health_notes" value={form.health_notes} onChange={(e) => update("health_notes", e.target.value)} placeholder="Any health conditions, allergies, or special needs" maxLength={1000} rows={3} />
                   </div>
                 </div>
                 <div className="flex justify-between pt-4">
                   <Button variant="outline" onClick={() => setActiveTab("family")}>Back</Button>
                   <Button onClick={handleSubmit} disabled={saving} className="gradient-gold text-accent-foreground font-semibold shadow-gold hover:opacity-90 gap-2">
                     {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                    {saving ? "Saving..." : "Register Member"}
+                    {saving ? "Saving..." : isEditing ? "Update Profile" : "Register Member"}
                   </Button>
                 </div>
               </CardContent>

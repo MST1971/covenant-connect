@@ -14,7 +14,7 @@ import churchLogo from "@/assets/church-logo.png";
 const allNavItems = [
   { icon: Home, label: "Dashboard", path: "/dashboard", active: true, permission: "dashboard" },
   { icon: Users, label: "Members", path: "/members", permission: "members" },
-  { icon: UserPlus, label: "Visitors", path: "", permission: "visitors" },
+  { icon: UserPlus, label: "Visitors", path: "/visitors", permission: "visitors" },
   { icon: Building2, label: "Departments", path: "/departments", permission: "departments" },
   { icon: Calendar, label: "Programs", path: "/programs", permission: "programs" },
   { icon: QrCode, label: "Scan Attendance", path: "/attendance/scan", permission: "attendance.scan" },

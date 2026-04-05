@@ -4,9 +4,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useUserRole } from "@/hooks/useUserRole";
 import {
   Search, Filter, UserPlus, ArrowLeft, Phone, Mail, MapPin,
-  ChevronRight, Users, X, Calendar, Heart, Briefcase, QrCode, Download
+  ChevronRight, Users, X, Calendar, Heart, Briefcase, QrCode, Download, IdCard, Loader2
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,8 @@ const MembersList = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const qc = useQueryClient();
+  const { isSuperAdmin, hasRole } = useUserRole();
+  const canGenerateId = isSuperAdmin || hasRole("pastor");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("All Departments");
@@ -54,6 +57,37 @@ const MembersList = () => {
       qc.invalidateQueries({ queryKey: ["profiles"] });
       if (selectedMember) setSelectedMember({ ...selectedMember, qr_code: qrCode } as any);
       toast({ title: "QR Code Generated" });
+    },
+    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+
+  const generateMemberCode = useMutation({
+    mutationFn: async ({ memberId, type }: { memberId: string; type: "family" | "single" }) => {
+      const prefix = type === "family" ? "CBC/Suleja/F" : "CBC/Suleja/S";
+      // Get current counter
+      const { data: counter, error: cErr } = await supabase
+        .from("member_id_counters")
+        .select("*")
+        .eq("counter_type", type)
+        .single();
+      if (cErr) throw cErr;
+      const nextNum = (counter.last_number || 0) + 1;
+      const code = `${prefix}/${String(nextNum).padStart(3, "0")}`;
+      // Update counter
+      const { error: uErr } = await supabase
+        .from("member_id_counters")
+        .update({ last_number: nextNum, updated_at: new Date().toISOString() })
+        .eq("counter_type", type);
+      if (uErr) throw uErr;
+      // Set member code
+      const { error: pErr } = await supabase.from("profiles").update({ member_code: code } as any).eq("id", memberId);
+      if (pErr) throw pErr;
+      return code;
+    },
+    onSuccess: (code) => {
+      qc.invalidateQueries({ queryKey: ["profiles"] });
+      if (selectedMember) setSelectedMember({ ...selectedMember, member_code: code } as any);
+      toast({ title: "Member ID Generated", description: code });
     },
     onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
@@ -87,14 +121,20 @@ const MembersList = () => {
 
   const filtered = useMemo(() => {
     if (!profiles) return [];
+    const s = search.toLowerCase();
     return profiles.filter((p) => {
       const matchesSearch =
         !search ||
-        p.full_name.toLowerCase().includes(search.toLowerCase()) ||
-        p.email?.toLowerCase().includes(search.toLowerCase()) ||
-        p.phone_number?.includes(search);
+        p.full_name.toLowerCase().includes(s) ||
+        p.email?.toLowerCase().includes(s) ||
+        p.phone_number?.includes(search) ||
+        (p as any).member_code?.toLowerCase().includes(s) ||
+        p.address?.toLowerCase().includes(s) ||
+        p.city?.toLowerCase().includes(s) ||
+        p.occupation?.toLowerCase().includes(s) ||
+        (p as any).spouse_name?.toLowerCase().includes(s) ||
+        p.qr_code?.toLowerCase().includes(s);
       const matchesStatus = statusFilter === "all" || p.membership_status === statusFilter;
-      // Department filter would need spiritual_info join; for now filter client-side if loaded
       return matchesSearch && matchesStatus;
     });
   }, [profiles, search, statusFilter]);
@@ -210,6 +250,9 @@ const MembersList = () => {
                           {member.membership_status}
                         </Badge>
                       )}
+                      {(member as any).member_code && (
+                        <p className="text-[10px] font-mono text-muted-foreground mt-0.5">{(member as any).member_code}</p>
+                      )}
                       <div className="mt-2 space-y-0.5">
                         {member.phone_number && (
                           <p className="text-xs text-muted-foreground flex items-center gap-1.5">
@@ -307,6 +350,30 @@ const MembersList = () => {
                     <span className="text-muted-foreground">Health Notes:</span>
                     <p className="mt-0.5">{selectedMember.health_notes}</p>
                   </div>
+                )}
+              </div>
+
+              <Separator className="my-2" />
+
+              {/* Member ID */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Member ID</h4>
+                {(selectedMember as any).member_code ? (
+                  <div className="flex items-center gap-2">
+                    <IdCard className="h-4 w-4 text-primary" />
+                    <span className="font-mono font-semibold">{(selectedMember as any).member_code}</span>
+                  </div>
+                ) : canGenerateId ? (
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" onClick={() => generateMemberCode.mutate({ memberId: selectedMember.id, type: "family" })} disabled={generateMemberCode.isPending}>
+                      {generateMemberCode.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <IdCard className="h-3.5 w-3.5 mr-1" />} Family ID (F)
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => generateMemberCode.mutate({ memberId: selectedMember.id, type: "single" })} disabled={generateMemberCode.isPending}>
+                      {generateMemberCode.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <IdCard className="h-3.5 w-3.5 mr-1" />} Single ID (S)
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No ID assigned yet</p>
                 )}
               </div>
 
