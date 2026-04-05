@@ -355,6 +355,30 @@ const MembersList = () => {
 
               <Separator className="my-2" />
 
+              {/* Member ID */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Member ID</h4>
+                {(selectedMember as any).member_code ? (
+                  <div className="flex items-center gap-2">
+                    <IdCard className="h-4 w-4 text-primary" />
+                    <span className="font-mono font-semibold">{(selectedMember as any).member_code}</span>
+                  </div>
+                ) : canGenerateId ? (
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" onClick={() => generateMemberCode.mutate({ memberId: selectedMember.id, type: "family" })} disabled={generateMemberCode.isPending}>
+                      {generateMemberCode.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <IdCard className="h-3.5 w-3.5 mr-1" />} Family ID (F)
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => generateMemberCode.mutate({ memberId: selectedMember.id, type: "single" })} disabled={generateMemberCode.isPending}>
+                      {generateMemberCode.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <IdCard className="h-3.5 w-3.5 mr-1" />} Single ID (S)
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No ID assigned yet</p>
+                )}
+              </div>
+
+              <Separator className="my-2" />
+
               {/* QR Code */}
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">QR Code</h4>
