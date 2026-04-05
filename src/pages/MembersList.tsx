@@ -250,6 +250,9 @@ const MembersList = () => {
                           {member.membership_status}
                         </Badge>
                       )}
+                      {(member as any).member_code && (
+                        <p className="text-[10px] font-mono text-muted-foreground mt-0.5">{(member as any).member_code}</p>
+                      )}
                       <div className="mt-2 space-y-0.5">
                         {member.phone_number && (
                           <p className="text-xs text-muted-foreground flex items-center gap-1.5">
