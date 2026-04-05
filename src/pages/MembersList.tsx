@@ -4,9 +4,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useUserRole } from "@/hooks/useUserRole";
 import {
   Search, Filter, UserPlus, ArrowLeft, Phone, Mail, MapPin,
-  ChevronRight, Users, X, Calendar, Heart, Briefcase, QrCode, Download
+  ChevronRight, Users, X, Calendar, Heart, Briefcase, QrCode, Download, IdCard, Loader2
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -87,14 +88,20 @@ const MembersList = () => {
 
   const filtered = useMemo(() => {
     if (!profiles) return [];
+    const s = search.toLowerCase();
     return profiles.filter((p) => {
       const matchesSearch =
         !search ||
-        p.full_name.toLowerCase().includes(search.toLowerCase()) ||
-        p.email?.toLowerCase().includes(search.toLowerCase()) ||
-        p.phone_number?.includes(search);
+        p.full_name.toLowerCase().includes(s) ||
+        p.email?.toLowerCase().includes(s) ||
+        p.phone_number?.includes(search) ||
+        (p as any).member_code?.toLowerCase().includes(s) ||
+        p.address?.toLowerCase().includes(s) ||
+        p.city?.toLowerCase().includes(s) ||
+        p.occupation?.toLowerCase().includes(s) ||
+        (p as any).spouse_name?.toLowerCase().includes(s) ||
+        p.qr_code?.toLowerCase().includes(s);
       const matchesStatus = statusFilter === "all" || p.membership_status === statusFilter;
-      // Department filter would need spiritual_info join; for now filter client-side if loaded
       return matchesSearch && matchesStatus;
     });
   }, [profiles, search, statusFilter]);
