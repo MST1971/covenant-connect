@@ -202,6 +202,7 @@ const Dashboard = () => {
                   { label: "Record Attendance", icon: Shield, path: "/attendance/reports", perm: "attendance.reports" },
                   { label: "Manage Programs", icon: Calendar, path: "/programs", perm: "programs.manage" },
                   { label: "Departments", icon: Building2, path: "/departments", perm: "departments" },
+                  { label: "Record Giving", icon: Heart, path: "/giving", perm: "giving" },
                   ...(isSuperAdmin ? [{ label: "Manage Roles", icon: UserCog, path: "/roles", perm: "roles.manage" }] : []),
                 ].filter((a) => hasPermission(a.perm)).map((action) => (
                   <button
