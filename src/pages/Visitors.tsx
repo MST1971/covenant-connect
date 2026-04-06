@@ -5,7 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, UserPlus, Search, Phone, Mail, Calendar,
-  ChevronRight, Users, Check, Clock, MessageSquare, X
+  ChevronRight, Users, Check, Clock, MessageSquare, X, FileDown, Download
+} from "lucide-react";
+import { exportToCSV, exportToPDF } from "@/utils/exportUtils";
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -135,9 +137,27 @@ const Visitors = () => {
               <p className="text-xs text-muted-foreground">{filtered.length} visitor{filtered.length !== 1 ? "s" : ""}</p>
             </div>
           </div>
-          <Button onClick={() => setShowForm(true)} className="gradient-gold text-accent-foreground font-semibold shadow-gold hover:opacity-90 gap-1.5" size="sm">
-            <UserPlus className="h-4 w-4" /> Register Visitor
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => setShowForm(true)} className="gradient-gold text-accent-foreground font-semibold shadow-gold hover:opacity-90 gap-1.5" size="sm">
+              <UserPlus className="h-4 w-4" /> Register Visitor
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => {
+              const cols = [
+                { key: "full_name", label: "Name" }, { key: "phone_number", label: "Phone" },
+                { key: "email", label: "Email" }, { key: "visit_date", label: "Visit Date" },
+                { key: "invited_by_name", label: "Invited By" }, { key: "follow_up_status", label: "Status" },
+              ];
+              exportToCSV(filtered, "visitors-list", cols);
+            }}><FileDown className="h-4 w-4" /></Button>
+            <Button variant="outline" size="sm" onClick={() => {
+              const cols = [
+                { key: "full_name", label: "Name" }, { key: "phone_number", label: "Phone" },
+                { key: "visit_date", label: "Visit Date" }, { key: "invited_by_name", label: "Invited By" },
+                { key: "follow_up_status", label: "Status" },
+              ];
+              exportToPDF(filtered, "Visitors List — Covenant Baptist Church Suleja", cols);
+            }}><Download className="h-4 w-4" /></Button>
+          </div>
         </div>
       </header>
 

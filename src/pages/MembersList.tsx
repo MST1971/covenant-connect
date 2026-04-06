@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/useUserRole";
 import {
   Search, Filter, UserPlus, ArrowLeft, Phone, Mail, MapPin,
-  ChevronRight, Users, X, Calendar, Heart, Briefcase, QrCode, Download, IdCard, Loader2
+  ChevronRight, Users, X, Calendar, Heart, Briefcase, QrCode, Download, IdCard, Loader2, FileDown
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { QRCodeSVG } from "qrcode.react";
 import type { Tables } from "@/integrations/supabase/types";
+import { exportToCSV, exportToPDF } from "@/utils/exportUtils";
 
 type Profile = Tables<"profiles">;
 type SpiritualInfo = Tables<"spiritual_info">;
@@ -160,13 +161,32 @@ const MembersList = () => {
               </p>
             </div>
           </div>
-          <Button
-            onClick={() => navigate("/members/register")}
-            className="gradient-gold text-accent-foreground font-semibold shadow-gold hover:opacity-90 gap-1.5"
-            size="sm"
-          >
-            <UserPlus className="h-4 w-4" /> Add Member
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => navigate("/members/register")}
+              className="gradient-gold text-accent-foreground font-semibold shadow-gold hover:opacity-90 gap-1.5"
+              size="sm"
+            >
+              <UserPlus className="h-4 w-4" /> Add Member
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => {
+              const cols = [
+                { key: "full_name", label: "Name" }, { key: "email", label: "Email" },
+                { key: "phone_number", label: "Phone" }, { key: "gender", label: "Gender" },
+                { key: "membership_status", label: "Status" }, { key: "member_code", label: "Member ID" },
+                { key: "address", label: "Address" }, { key: "city", label: "City" },
+              ];
+              exportToCSV(filtered, "members-list", cols);
+            }}><FileDown className="h-4 w-4" /></Button>
+            <Button variant="outline" size="sm" onClick={() => {
+              const cols = [
+                { key: "full_name", label: "Name" }, { key: "email", label: "Email" },
+                { key: "phone_number", label: "Phone" }, { key: "membership_status", label: "Status" },
+                { key: "member_code", label: "Member ID" }, { key: "address", label: "Address" },
+              ];
+              exportToPDF(filtered, "Members List — Covenant Baptist Church Suleja", cols);
+            }}><Download className="h-4 w-4" /></Button>
+          </div>
         </div>
       </header>
 
