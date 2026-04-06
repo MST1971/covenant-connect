@@ -8,7 +8,6 @@ import {
   ChevronRight, Users, Check, Clock, MessageSquare, X, FileDown, Download
 } from "lucide-react";
 import { exportToCSV, exportToPDF } from "@/utils/exportUtils";
-} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
