@@ -10,6 +10,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import churchLogo from "@/assets/church-logo.png";
+import BirthdayReminders from "@/components/BirthdayReminders";
 
 const allNavItems = [
   { icon: Home, label: "Dashboard", path: "/dashboard", active: true, permission: "dashboard" },
@@ -20,7 +21,7 @@ const allNavItems = [
   { icon: QrCode, label: "Scan Attendance", path: "/attendance/scan", permission: "attendance.scan" },
   { icon: Shield, label: "Attendance Reports", path: "/attendance/reports", permission: "attendance.reports" },
   { icon: MessageSquare, label: "Messages", path: "", permission: "messages" },
-  { icon: Heart, label: "Giving", path: "", permission: "giving" },
+  { icon: Heart, label: "Giving", path: "/giving", permission: "giving" },
   { icon: BarChart3, label: "Reports", path: "", permission: "reports" },
   { icon: UserCog, label: "Role Management", path: "/roles", permission: "roles.manage" },
   { icon: Settings, label: "Settings", path: "", permission: "settings" },
@@ -162,6 +163,9 @@ const Dashboard = () => {
             ))}
           </div>
 
+          {/* Birthday Reminders */}
+          <BirthdayReminders />
+
           {/* Quick Actions & Activity */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="lg:col-span-2 border-0 shadow-sm">
@@ -198,6 +202,7 @@ const Dashboard = () => {
                   { label: "Record Attendance", icon: Shield, path: "/attendance/reports", perm: "attendance.reports" },
                   { label: "Manage Programs", icon: Calendar, path: "/programs", perm: "programs.manage" },
                   { label: "Departments", icon: Building2, path: "/departments", perm: "departments" },
+                  { label: "Record Giving", icon: Heart, path: "/giving", perm: "giving" },
                   ...(isSuperAdmin ? [{ label: "Manage Roles", icon: UserCog, path: "/roles", perm: "roles.manage" }] : []),
                 ].filter((a) => hasPermission(a.perm)).map((action) => (
                   <button

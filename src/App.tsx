@@ -19,6 +19,7 @@ import Departments from "./pages/Departments.tsx";
 import ScanAttendance from "./pages/ScanAttendance.tsx";
 import AttendanceReports from "./pages/AttendanceReports.tsx";
 import Visitors from "./pages/Visitors.tsx";
+import GivingManagement from "./pages/GivingManagement.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -61,6 +62,9 @@ const App = () => (
             } />
             <Route path="/visitors" element={
               <ProtectedRoute><Visitors /></ProtectedRoute>
+            } />
+            <Route path="/giving" element={
+              <ProtectedRoute><GivingManagement /></ProtectedRoute>
             } />
             <Route path="/roles" element={
               <ProtectedRoute><RoleManagement /></ProtectedRoute>
