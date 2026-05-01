@@ -434,6 +434,10 @@ const MembersList = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {selectedMember && (
+        <MemberIdCard member={selectedMember} open={showIdCard} onOpenChange={setShowIdCard} />
+      )}
     </div>
   );
 };
