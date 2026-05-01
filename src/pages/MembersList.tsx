@@ -20,6 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { QRCodeSVG } from "qrcode.react";
 import type { Tables } from "@/integrations/supabase/types";
 import { exportToCSV, exportToPDF } from "@/utils/exportUtils";
+import { MemberIdCard } from "@/components/MemberIdCard";
 
 type Profile = Tables<"profiles">;
 type SpiritualInfo = Tables<"spiritual_info">;
@@ -46,6 +47,7 @@ const MembersList = () => {
   const [departmentFilter, setDepartmentFilter] = useState("All Departments");
   const [selectedMember, setSelectedMember] = useState<Profile | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [showIdCard, setShowIdCard] = useState(false);
 
   const generateQR = useMutation({
     mutationFn: async (memberId: string) => {
@@ -379,9 +381,14 @@ const MembersList = () => {
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Member ID</h4>
                 {(selectedMember as any).member_code ? (
-                  <div className="flex items-center gap-2">
-                    <IdCard className="h-4 w-4 text-primary" />
-                    <span className="font-mono font-semibold">{(selectedMember as any).member_code}</span>
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <IdCard className="h-4 w-4 text-primary" />
+                      <span className="font-mono font-semibold">{(selectedMember as any).member_code}</span>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => setShowIdCard(true)}>
+                      <IdCard className="h-3.5 w-3.5 mr-1" /> Print ID Card
+                    </Button>
                   </div>
                 ) : canGenerateId ? (
                   <div className="flex flex-wrap gap-2">
@@ -427,6 +434,10 @@ const MembersList = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {selectedMember && (
+        <MemberIdCard member={selectedMember} open={showIdCard} onOpenChange={setShowIdCard} />
+      )}
     </div>
   );
 };
