@@ -381,9 +381,14 @@ const MembersList = () => {
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Member ID</h4>
                 {(selectedMember as any).member_code ? (
-                  <div className="flex items-center gap-2">
-                    <IdCard className="h-4 w-4 text-primary" />
-                    <span className="font-mono font-semibold">{(selectedMember as any).member_code}</span>
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <IdCard className="h-4 w-4 text-primary" />
+                      <span className="font-mono font-semibold">{(selectedMember as any).member_code}</span>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => setShowIdCard(true)}>
+                      <IdCard className="h-3.5 w-3.5 mr-1" /> Print ID Card
+                    </Button>
                   </div>
                 ) : canGenerateId ? (
                   <div className="flex flex-wrap gap-2">
