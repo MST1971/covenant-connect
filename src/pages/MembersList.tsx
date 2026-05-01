@@ -47,6 +47,7 @@ const MembersList = () => {
   const [departmentFilter, setDepartmentFilter] = useState("All Departments");
   const [selectedMember, setSelectedMember] = useState<Profile | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [showIdCard, setShowIdCard] = useState(false);
 
   const generateQR = useMutation({
     mutationFn: async (memberId: string) => {
