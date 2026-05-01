@@ -20,6 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { QRCodeSVG } from "qrcode.react";
 import type { Tables } from "@/integrations/supabase/types";
 import { exportToCSV, exportToPDF } from "@/utils/exportUtils";
+import { MemberIdCard } from "@/components/MemberIdCard";
 
 type Profile = Tables<"profiles">;
 type SpiritualInfo = Tables<"spiritual_info">;
