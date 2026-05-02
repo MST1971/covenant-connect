@@ -21,6 +21,7 @@ import AttendanceReports from "./pages/AttendanceReports.tsx";
 import Visitors from "./pages/Visitors.tsx";
 import GivingManagement from "./pages/GivingManagement.tsx";
 import FinancialReports from "./pages/FinancialReports.tsx";
+import Finance from "./pages/Finance.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -69,6 +70,9 @@ const App = () => (
             } />
             <Route path="/financial-reports" element={
               <ProtectedRoute><FinancialReports /></ProtectedRoute>
+            } />
+            <Route path="/finance" element={
+              <ProtectedRoute><Finance /></ProtectedRoute>
             } />
             <Route path="/roles" element={
               <ProtectedRoute><RoleManagement /></ProtectedRoute>

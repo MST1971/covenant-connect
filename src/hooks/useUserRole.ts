@@ -11,13 +11,14 @@ const ROLE_PERMISSIONS: Record<AppRole, string[]> = {
     "dashboard", "members", "members.register", "members.edit", "members.delete",
     "departments", "departments.manage", "programs", "programs.manage",
     "attendance.scan", "attendance.reports", "reports", "settings",
-    "roles.manage", "giving", "messages", "visitors"
+    "roles.manage", "giving", "messages", "visitors",
+    "finance", "finance.edit"
   ],
   pastor: [
     "dashboard", "members", "members.register", "members.edit",
     "departments", "departments.manage", "programs", "programs.manage",
     "attendance.scan", "attendance.reports", "reports",
-    "giving", "messages", "visitors"
+    "giving", "messages", "visitors", "finance"
   ],
   secretary: [
     "dashboard", "members", "members.register", "members.edit",
@@ -30,7 +31,7 @@ const ROLE_PERMISSIONS: Record<AppRole, string[]> = {
     "departments", "attendance.scan", "attendance.reports"
   ],
   finance_officer: [
-    "dashboard", "members", "giving", "reports"
+    "dashboard", "members", "giving", "reports", "finance", "finance.edit"
   ],
   member: [
     "dashboard.personal", "profile.view", "profile.edit",
