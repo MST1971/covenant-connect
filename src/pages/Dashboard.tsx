@@ -23,6 +23,7 @@ const allNavItems = [
   { icon: MessageSquare, label: "Messages", path: "", permission: "messages" },
   { icon: Heart, label: "Giving", path: "/giving", permission: "giving" },
   { icon: BarChart3, label: "Financial Reports", path: "/financial-reports", permission: "reports" },
+  { icon: FileText, label: "Finance Center", path: "/finance", permission: "finance" },
   { icon: UserCog, label: "Role Management", path: "/roles", permission: "roles.manage" },
   { icon: Settings, label: "Settings", path: "", permission: "settings" },
 ];

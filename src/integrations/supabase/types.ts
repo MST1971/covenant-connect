@@ -220,6 +220,385 @@ export type Database = {
           },
         ]
       }
+      financial_accounts: {
+        Row: {
+          account_number: string | null
+          account_type: Database["public"]["Enums"]["account_type"]
+          bank_name: string | null
+          created_at: string
+          currency: string
+          current_balance: number
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          opening_balance: number
+          updated_at: string
+        }
+        Insert: {
+          account_number?: string | null
+          account_type?: Database["public"]["Enums"]["account_type"]
+          bank_name?: string | null
+          created_at?: string
+          currency?: string
+          current_balance?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          opening_balance?: number
+          updated_at?: string
+        }
+        Update: {
+          account_number?: string | null
+          account_type?: Database["public"]["Enums"]["account_type"]
+          bank_name?: string | null
+          created_at?: string
+          currency?: string
+          current_balance?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          opening_balance?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      financial_budget_lines: {
+        Row: {
+          budget_id: string
+          category_id: string
+          created_at: string
+          id: string
+          month: number
+          notes: string | null
+          planned_amount: number
+          updated_at: string
+        }
+        Insert: {
+          budget_id: string
+          category_id: string
+          created_at?: string
+          id?: string
+          month: number
+          notes?: string | null
+          planned_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          budget_id?: string
+          category_id?: string
+          created_at?: string
+          id?: string
+          month?: number
+          notes?: string | null
+          planned_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_budget_lines_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "financial_budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_budget_lines_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "financial_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_budgets: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          fiscal_year: number
+          id: string
+          name: string
+          notes: string | null
+          status: Database["public"]["Enums"]["budget_status"]
+          total_expense_planned: number
+          total_income_planned: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          fiscal_year: number
+          id?: string
+          name: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["budget_status"]
+          total_expense_planned?: number
+          total_income_planned?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          fiscal_year?: number
+          id?: string
+          name?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["budget_status"]
+          total_expense_planned?: number
+          total_income_planned?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      financial_categories: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          is_system: boolean
+          kind: Database["public"]["Enums"]["category_kind"]
+          name: string
+          parent_id: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_system?: boolean
+          kind: Database["public"]["Enums"]["category_kind"]
+          name: string
+          parent_id?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_system?: boolean
+          kind?: Database["public"]["Enums"]["category_kind"]
+          name?: string
+          parent_id?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "financial_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_fiscal_years: {
+        Row: {
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string
+          end_date: string
+          id: string
+          is_closed: boolean
+          start_date: string
+          year: number
+        }
+        Insert: {
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          end_date: string
+          id?: string
+          is_closed?: boolean
+          start_date: string
+          year: number
+        }
+        Update: {
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          end_date?: string
+          id?: string
+          is_closed?: boolean
+          start_date?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      financial_recurring: {
+        Row: {
+          account_id: string
+          amount: number
+          auto_post: boolean
+          category_id: string | null
+          created_at: string
+          day_of_month: number | null
+          description: string | null
+          end_date: string | null
+          frequency: Database["public"]["Enums"]["recurring_freq"]
+          id: string
+          is_active: boolean
+          kind: Database["public"]["Enums"]["txn_kind"]
+          last_run_at: string | null
+          name: string
+          next_run_date: string
+          payee_or_payer: string | null
+          start_date: string
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          auto_post?: boolean
+          category_id?: string | null
+          created_at?: string
+          day_of_month?: number | null
+          description?: string | null
+          end_date?: string | null
+          frequency?: Database["public"]["Enums"]["recurring_freq"]
+          id?: string
+          is_active?: boolean
+          kind: Database["public"]["Enums"]["txn_kind"]
+          last_run_at?: string | null
+          name: string
+          next_run_date?: string
+          payee_or_payer?: string | null
+          start_date?: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          auto_post?: boolean
+          category_id?: string | null
+          created_at?: string
+          day_of_month?: number | null
+          description?: string | null
+          end_date?: string | null
+          frequency?: Database["public"]["Enums"]["recurring_freq"]
+          id?: string
+          is_active?: boolean
+          kind?: Database["public"]["Enums"]["txn_kind"]
+          last_run_at?: string | null
+          name?: string
+          next_run_date?: string
+          payee_or_payer?: string | null
+          start_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_recurring_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_recurring_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "financial_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_transactions: {
+        Row: {
+          account_id: string
+          amount: number
+          approved_by: string | null
+          category_id: string | null
+          created_at: string
+          description: string | null
+          giving_record_id: string | null
+          id: string
+          kind: Database["public"]["Enums"]["txn_kind"]
+          payee_or_payer: string | null
+          payment_method: string | null
+          receipt_url: string | null
+          recorded_by: string | null
+          reference: string | null
+          status: Database["public"]["Enums"]["txn_status"]
+          to_account_id: string | null
+          txn_date: string
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          approved_by?: string | null
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          giving_record_id?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["txn_kind"]
+          payee_or_payer?: string | null
+          payment_method?: string | null
+          receipt_url?: string | null
+          recorded_by?: string | null
+          reference?: string | null
+          status?: Database["public"]["Enums"]["txn_status"]
+          to_account_id?: string | null
+          txn_date?: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          approved_by?: string | null
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          giving_record_id?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["txn_kind"]
+          payee_or_payer?: string | null
+          payment_method?: string | null
+          receipt_url?: string | null
+          recorded_by?: string | null
+          reference?: string | null
+          status?: Database["public"]["Enums"]["txn_status"]
+          to_account_id?: string | null
+          txn_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "financial_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_giving_record_id_fkey"
+            columns: ["giving_record_id"]
+            isOneToOne: false
+            referencedRelation: "giving_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_to_account_id_fkey"
+            columns: ["to_account_id"]
+            isOneToOne: false
+            referencedRelation: "financial_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       giving_records: {
         Row: {
           amount: number
@@ -605,6 +984,7 @@ export type Database = {
       }
     }
     Enums: {
+      account_type: "cash" | "bank" | "mobile_money" | "other"
       app_role:
         | "super_admin"
         | "pastor"
@@ -612,9 +992,14 @@ export type Database = {
         | "department_leader"
         | "finance_officer"
         | "member"
+      budget_status: "draft" | "active" | "closed"
+      category_kind: "income" | "expense"
       gender_type: "male" | "female"
       marital_status_type: "single" | "married" | "divorced" | "widowed"
       membership_status: "member" | "visitor" | "worker"
+      recurring_freq: "weekly" | "monthly" | "quarterly" | "yearly"
+      txn_kind: "income" | "expense" | "transfer"
+      txn_status: "pending" | "posted" | "void"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -742,6 +1127,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      account_type: ["cash", "bank", "mobile_money", "other"],
       app_role: [
         "super_admin",
         "pastor",
@@ -750,9 +1136,14 @@ export const Constants = {
         "finance_officer",
         "member",
       ],
+      budget_status: ["draft", "active", "closed"],
+      category_kind: ["income", "expense"],
       gender_type: ["male", "female"],
       marital_status_type: ["single", "married", "divorced", "widowed"],
       membership_status: ["member", "visitor", "worker"],
+      recurring_freq: ["weekly", "monthly", "quarterly", "yearly"],
+      txn_kind: ["income", "expense", "transfer"],
+      txn_status: ["pending", "posted", "void"],
     },
   },
 } as const
