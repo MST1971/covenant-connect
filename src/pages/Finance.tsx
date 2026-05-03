@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import {
   ArrowLeft, Plus, Wallet, TrendingUp, TrendingDown, ArrowLeftRight,
-  Target, BarChart3, Repeat, Tags, Download, Trash2, Edit, AlertCircle,
+  Target, BarChart3, Repeat, Tags, Download, Trash2, Edit, AlertCircle, Paperclip, Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -160,8 +160,16 @@ const Finance = () => {
 
   // ============ MUTATIONS ============
   const addTxn = useMutation({
-    mutationFn: async (payload: any) => {
-      const { error } = await supabase.from("financial_transactions").insert({ ...payload, recorded_by: user?.id });
+    mutationFn: async ({ receiptFile, ...payload }: any) => {
+      let receipt_url: string | null = payload.receipt_url || null;
+      if (receiptFile instanceof File) {
+        const ext = receiptFile.name.split(".").pop() || "bin";
+        const path = `${user?.id || "anon"}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("receipts").upload(path, receiptFile, { upsert: false });
+        if (upErr) throw upErr;
+        receipt_url = path;
+      }
+      const { error } = await supabase.from("financial_transactions").insert({ ...payload, receipt_url, recorded_by: user?.id });
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Transaction recorded"); qc.invalidateQueries({ queryKey: ["fin_txn"] }); qc.invalidateQueries({ queryKey: ["fin_accounts"] }); },
@@ -379,12 +387,14 @@ const SummaryCard = ({ label, value, icon: Icon, tone }: any) => {
 
 const TransactionsPanel = ({ kind, canEdit, transactions, accounts, categories, onAdd, onDelete, onExport }: any) => {
   const [open, setOpen] = useState(false);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [form, setForm] = useState<any>({ txn_date: new Date().toISOString().split("T")[0], amount: "", category_id: "", account_id: "", payee_or_payer: "", description: "", reference: "", payment_method: "cash" });
 
   const submit = () => {
     if (!form.amount || !form.account_id) return toast.error("Amount and account required");
-    onAdd({ ...form, amount: Number(form.amount) });
+    onAdd({ ...form, amount: Number(form.amount), receiptFile });
     setOpen(false);
+    setReceiptFile(null);
     setForm({ ...form, amount: "", payee_or_payer: "", description: "", reference: "" });
   };
 
@@ -432,6 +442,15 @@ const TransactionsPanel = ({ kind, canEdit, transactions, accounts, categories, 
                   </div>
                 </div>
                 <div><Label>Description</Label><Textarea rows={2} value={form.description} onChange={e => setForm({...form, description: e.target.value})} /></div>
+                <div>
+                  <Label>Receipt / Supporting Document</Label>
+                  <Input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    onChange={e => setReceiptFile(e.target.files?.[0] || null)}
+                  />
+                  {receiptFile && <p className="text-xs text-muted-foreground mt-1">📎 {receiptFile.name} ({(receiptFile.size/1024).toFixed(0)} KB)</p>}
+                </div>
               </div>
               <DialogFooter><Button onClick={submit}>Save</Button></DialogFooter>
             </DialogContent>
@@ -441,9 +460,9 @@ const TransactionsPanel = ({ kind, canEdit, transactions, accounts, categories, 
       <CardContent>
         <div className="overflow-x-auto">
           <Table>
-            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Category</TableHead><TableHead>Account</TableHead><TableHead>{kind === "income" ? "Payer" : "Payee"}</TableHead><TableHead className="text-right">Amount</TableHead>{canEdit && <TableHead></TableHead>}</TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Category</TableHead><TableHead>Account</TableHead><TableHead>{kind === "income" ? "Payer" : "Payee"}</TableHead><TableHead className="text-right">Amount</TableHead><TableHead className="text-center">Receipt</TableHead>{canEdit && <TableHead></TableHead>}</TableRow></TableHeader>
             <TableBody>
-              {transactions.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No transactions</TableCell></TableRow> :
+              {transactions.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No transactions</TableCell></TableRow> :
                 transactions.map((t: any) => (
                   <TableRow key={t.id}>
                     <TableCell className="text-sm">{t.txn_date}</TableCell>
@@ -451,6 +470,15 @@ const TransactionsPanel = ({ kind, canEdit, transactions, accounts, categories, 
                     <TableCell className="text-sm">{t.financial_accounts?.name}</TableCell>
                     <TableCell className="text-sm">{t.payee_or_payer || "—"}</TableCell>
                     <TableCell className="text-right font-mono font-medium">{fmt(t.amount)}</TableCell>
+                    <TableCell className="text-center">
+                      {t.receipt_url ? (
+                        <Button size="icon" variant="ghost" title="View receipt" onClick={async () => {
+                          const { data } = await supabase.storage.from("receipts").createSignedUrl(t.receipt_url, 300);
+                          if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+                          else toast.error("Could not load receipt");
+                        }}><Paperclip className="h-4 w-4 text-primary" /></Button>
+                      ) : <span className="text-xs text-muted-foreground">—</span>}
+                    </TableCell>
                     {canEdit && <TableCell><Button size="icon" variant="ghost" onClick={() => confirm("Delete this transaction?") && onDelete(t.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell>}
                   </TableRow>
                 ))}

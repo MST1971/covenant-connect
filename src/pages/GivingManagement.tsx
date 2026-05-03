@@ -1,12 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import {
-  ArrowLeft, Plus, Search, DollarSign, Calendar, Users, Download
+  ArrowLeft, Plus, Search, DollarSign, Calendar, Users, Download, Receipt, Settings
 } from "lucide-react";
+import GivingReceipt from "@/components/GivingReceipt";
+import { Switch } from "@/components/ui/switch";
+import { useUserRole } from "@/hooks/useUserRole";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 const givingTypes = ["tithe", "offering", "donation", "seed", "building_fund", "mission", "other"];
 const paymentMethods = ["cash", "transfer", "pos", "online"];
@@ -24,9 +27,13 @@ const GivingManagement = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
+  const { hasPermission } = useUserRole();
+  const canManageSettings = hasPermission("settings") || hasPermission("roles.manage");
   const [showForm, setShowForm] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [receiptRecord, setReceiptRecord] = useState<any>(null);
   const [form, setForm] = useState({
     profile_id: "", amount: "", giving_type: "tithe",
     payment_method: "cash", date: new Date().toISOString().split("T")[0],
@@ -34,6 +41,16 @@ const GivingManagement = () => {
   });
 
   const update = (f: string, v: string) => setForm(p => ({ ...p, [f]: v }));
+
+  const { data: settings } = useQuery({
+    queryKey: ["app_settings", "giving_receipts"],
+    queryFn: async () => {
+      const { data } = await supabase.from("app_settings").select("value").eq("key", "giving_receipts").maybeSingle();
+      return (data?.value as any) || { enabled: true, types: {}, footer_note: "" };
+    },
+  });
+
+  const receiptEnabled = (type: string) => settings?.enabled && (settings?.types?.[type] !== false);
 
   const { data: profiles } = useQuery({
     queryKey: ["profiles-list"],
@@ -60,7 +77,7 @@ const GivingManagement = () => {
     mutationFn: async () => {
       if (!form.profile_id) throw new Error("Select a member");
       if (!form.amount || Number(form.amount) <= 0) throw new Error("Enter a valid amount");
-      const { error } = await supabase.from("giving_records").insert({
+      const { data, error } = await supabase.from("giving_records").insert({
         profile_id: form.profile_id,
         amount: Number(form.amount),
         giving_type: form.giving_type,
@@ -69,14 +86,16 @@ const GivingManagement = () => {
         reference: form.reference.trim() || null,
         notes: form.notes.trim() || null,
         recorded_by: user?.id || null,
-      });
+      }).select("*, profiles(full_name, member_code)").single();
       if (error) throw error;
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (rec: any) => {
       qc.invalidateQueries({ queryKey: ["giving-records"] });
       setShowForm(false);
       setForm({ profile_id: "", amount: "", giving_type: "tithe", payment_method: "cash", date: new Date().toISOString().split("T")[0], reference: "", notes: "" });
       toast({ title: "Giving recorded!" });
+      if (rec && receiptEnabled(rec.giving_type)) setReceiptRecord(rec);
     },
     onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
@@ -105,9 +124,16 @@ const GivingManagement = () => {
               <p className="text-xs text-muted-foreground">{filtered.length} record{filtered.length !== 1 ? "s" : ""} • Total: ₦{totalAmount.toLocaleString()}</p>
             </div>
           </div>
-          <Button onClick={() => setShowForm(true)} className="gradient-gold text-accent-foreground font-semibold shadow-gold hover:opacity-90 gap-1.5" size="sm">
-            <Plus className="h-4 w-4" /> Record Giving
-          </Button>
+          <div className="flex gap-2">
+            {canManageSettings && (
+              <Button variant="outline" size="sm" onClick={() => setShowSettings(true)} className="gap-1.5">
+                <Settings className="h-4 w-4" /> Receipts
+              </Button>
+            )}
+            <Button onClick={() => setShowForm(true)} className="gradient-gold text-accent-foreground font-semibold shadow-gold hover:opacity-90 gap-1.5" size="sm">
+              <Plus className="h-4 w-4" /> Record Giving
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -154,22 +180,27 @@ const GivingManagement = () => {
           <div className="space-y-2">
             {filtered.map((r: any) => (
               <Card key={r.id} className="border-0 shadow-sm">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-secondary/10 flex items-center justify-center">
+                <CardContent className="p-4 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="h-10 w-10 rounded-full bg-secondary/10 flex items-center justify-center shrink-0">
                       <DollarSign className="h-5 w-5 text-secondary" />
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold">{r.profiles?.full_name || "Unknown"}</p>
-                      <p className="text-xs text-muted-foreground capitalize">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold truncate">{r.profiles?.full_name || "Unknown"}</p>
+                      <p className="text-xs text-muted-foreground capitalize truncate">
                         {r.giving_type.replace("_", " ")} • {r.payment_method} • {new Date(r.date).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right shrink-0">
                     <p className="font-bold text-sm">₦{Number(r.amount).toLocaleString()}</p>
                     {r.reference && <p className="text-[10px] text-muted-foreground">{r.reference}</p>}
                   </div>
+                  {receiptEnabled(r.giving_type) && (
+                    <Button size="icon" variant="ghost" onClick={() => setReceiptRecord(r)} title="Print receipt">
+                      <Receipt className="h-4 w-4" />
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -241,8 +272,93 @@ const GivingManagement = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {receiptRecord && (
+        <GivingReceipt
+          record={receiptRecord}
+          footerNote={settings?.footer_note}
+          onClose={() => setReceiptRecord(null)}
+        />
+      )}
+
+      <ReceiptSettingsDialog
+        open={showSettings}
+        onOpenChange={setShowSettings}
+        settings={settings}
+        onSaved={() => qc.invalidateQueries({ queryKey: ["app_settings", "giving_receipts"] })}
+      />
     </div>
   );
 };
+
+const ReceiptSettingsDialog = ({ open, onOpenChange, settings, onSaved }: any) => {
+  const { toast } = useToast();
+  const [enabled, setEnabled] = useState<boolean>(settings?.enabled ?? true);
+  const [types, setTypes] = useState<Record<string, boolean>>(settings?.types || {});
+  const [footer, setFooter] = useState<string>(settings?.footer_note || "");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setEnabled(settings?.enabled ?? true);
+      setTypes(settings?.types || {});
+      setFooter(settings?.footer_note || "");
+    }
+  }, [open, settings]);
+
+  const save = async () => {
+    setSaving(true);
+    const value = { enabled, types, footer_note: footer };
+    const { error } = await supabase.from("app_settings").update({ value }).eq("key", "giving_receipts");
+    setSaving(false);
+    if (error) return toast({ title: "Error", description: error.message, variant: "destructive" });
+    toast({ title: "Receipt settings saved" });
+    onSaved?.();
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>Giving Receipt Settings</DialogTitle></DialogHeader>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-3 rounded-md border">
+            <div>
+              <Label className="text-sm">Enable receipts</Label>
+              <p className="text-xs text-muted-foreground">Master switch for all giving receipts</p>
+            </div>
+            <Switch checked={enabled} onCheckedChange={setEnabled} />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm">Per giving type</Label>
+            <div className="border rounded-md divide-y">
+              {givingTypes.map(t => (
+                <div key={t} className="flex items-center justify-between p-2.5">
+                  <span className="text-sm capitalize">{t.replace(/_/g, " ")}</span>
+                  <Switch
+                    disabled={!enabled}
+                    checked={types[t] !== false}
+                    onCheckedChange={(v) => setTypes(prev => ({ ...prev, [t]: v }))}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-sm">Receipt footer note</Label>
+            <Textarea rows={2} value={footer} onChange={e => setFooter(e.target.value)} placeholder="Thank you for your faithful giving..." />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={save} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 
 export default GivingManagement;
