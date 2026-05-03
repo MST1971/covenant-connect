@@ -298,13 +298,13 @@ const ReceiptSettingsDialog = ({ open, onOpenChange, settings, onSaved }: any) =
   const [footer, setFooter] = useState<string>(settings?.footer_note || "");
   const [saving, setSaving] = useState(false);
 
-  // sync when dialog opens
-  useState(() => {
-    setEnabled(settings?.enabled ?? true);
-    setTypes(settings?.types || {});
-    setFooter(settings?.footer_note || "");
-    return undefined;
-  });
+  useEffect(() => {
+    if (open) {
+      setEnabled(settings?.enabled ?? true);
+      setTypes(settings?.types || {});
+      setFooter(settings?.footer_note || "");
+    }
+  }, [open, settings]);
 
   const save = async () => {
     setSaving(true);
