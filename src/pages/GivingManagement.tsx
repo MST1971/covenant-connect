@@ -28,6 +28,7 @@ const GivingManagement = () => {
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [receiptRecord, setReceiptRecord] = useState<any>(null);
   const [form, setForm] = useState({
     profile_id: "", amount: "", giving_type: "tithe",
     payment_method: "cash", date: new Date().toISOString().split("T")[0],
@@ -35,6 +36,16 @@ const GivingManagement = () => {
   });
 
   const update = (f: string, v: string) => setForm(p => ({ ...p, [f]: v }));
+
+  const { data: settings } = useQuery({
+    queryKey: ["app_settings", "giving_receipts"],
+    queryFn: async () => {
+      const { data } = await supabase.from("app_settings").select("value").eq("key", "giving_receipts").maybeSingle();
+      return (data?.value as any) || { enabled: true, types: {}, footer_note: "" };
+    },
+  });
+
+  const receiptEnabled = (type: string) => settings?.enabled && (settings?.types?.[type] !== false);
 
   const { data: profiles } = useQuery({
     queryKey: ["profiles-list"],
