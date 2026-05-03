@@ -166,22 +166,27 @@ const GivingManagement = () => {
           <div className="space-y-2">
             {filtered.map((r: any) => (
               <Card key={r.id} className="border-0 shadow-sm">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-secondary/10 flex items-center justify-center">
+                <CardContent className="p-4 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="h-10 w-10 rounded-full bg-secondary/10 flex items-center justify-center shrink-0">
                       <DollarSign className="h-5 w-5 text-secondary" />
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold">{r.profiles?.full_name || "Unknown"}</p>
-                      <p className="text-xs text-muted-foreground capitalize">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold truncate">{r.profiles?.full_name || "Unknown"}</p>
+                      <p className="text-xs text-muted-foreground capitalize truncate">
                         {r.giving_type.replace("_", " ")} • {r.payment_method} • {new Date(r.date).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right shrink-0">
                     <p className="font-bold text-sm">₦{Number(r.amount).toLocaleString()}</p>
                     {r.reference && <p className="text-[10px] text-muted-foreground">{r.reference}</p>}
                   </div>
+                  {receiptEnabled(r.giving_type) && (
+                    <Button size="icon" variant="ghost" onClick={() => setReceiptRecord(r)} title="Print receipt">
+                      <Receipt className="h-4 w-4" />
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             ))}
