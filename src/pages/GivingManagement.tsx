@@ -5,8 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import {
-  ArrowLeft, Plus, Search, DollarSign, Calendar, Users, Download
+  ArrowLeft, Plus, Search, DollarSign, Calendar, Users, Download, Receipt
 } from "lucide-react";
+import GivingReceipt from "@/components/GivingReceipt";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
