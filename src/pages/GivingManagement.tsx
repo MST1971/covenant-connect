@@ -27,7 +27,10 @@ const GivingManagement = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
+  const { hasPermission } = useUserRole();
+  const canManageSettings = hasPermission("settings") || hasPermission("roles.manage");
   const [showForm, setShowForm] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [receiptRecord, setReceiptRecord] = useState<any>(null);
