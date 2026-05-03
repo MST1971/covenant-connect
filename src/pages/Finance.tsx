@@ -460,9 +460,9 @@ const TransactionsPanel = ({ kind, canEdit, transactions, accounts, categories, 
       <CardContent>
         <div className="overflow-x-auto">
           <Table>
-            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Category</TableHead><TableHead>Account</TableHead><TableHead>{kind === "income" ? "Payer" : "Payee"}</TableHead><TableHead className="text-right">Amount</TableHead>{canEdit && <TableHead></TableHead>}</TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Category</TableHead><TableHead>Account</TableHead><TableHead>{kind === "income" ? "Payer" : "Payee"}</TableHead><TableHead className="text-right">Amount</TableHead><TableHead className="text-center">Receipt</TableHead>{canEdit && <TableHead></TableHead>}</TableRow></TableHeader>
             <TableBody>
-              {transactions.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No transactions</TableCell></TableRow> :
+              {transactions.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No transactions</TableCell></TableRow> :
                 transactions.map((t: any) => (
                   <TableRow key={t.id}>
                     <TableCell className="text-sm">{t.txn_date}</TableCell>
@@ -470,6 +470,15 @@ const TransactionsPanel = ({ kind, canEdit, transactions, accounts, categories, 
                     <TableCell className="text-sm">{t.financial_accounts?.name}</TableCell>
                     <TableCell className="text-sm">{t.payee_or_payer || "—"}</TableCell>
                     <TableCell className="text-right font-mono font-medium">{fmt(t.amount)}</TableCell>
+                    <TableCell className="text-center">
+                      {t.receipt_url ? (
+                        <Button size="icon" variant="ghost" title="View receipt" onClick={async () => {
+                          const { data } = await supabase.storage.from("receipts").createSignedUrl(t.receipt_url, 300);
+                          if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+                          else toast.error("Could not load receipt");
+                        }}><Paperclip className="h-4 w-4 text-primary" /></Button>
+                      ) : <span className="text-xs text-muted-foreground">—</span>}
+                    </TableCell>
                     {canEdit && <TableCell><Button size="icon" variant="ghost" onClick={() => confirm("Delete this transaction?") && onDelete(t.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button></TableCell>}
                   </TableRow>
                 ))}
