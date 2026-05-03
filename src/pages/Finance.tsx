@@ -160,8 +160,16 @@ const Finance = () => {
 
   // ============ MUTATIONS ============
   const addTxn = useMutation({
-    mutationFn: async (payload: any) => {
-      const { error } = await supabase.from("financial_transactions").insert({ ...payload, recorded_by: user?.id });
+    mutationFn: async ({ receiptFile, ...payload }: any) => {
+      let receipt_url: string | null = payload.receipt_url || null;
+      if (receiptFile instanceof File) {
+        const ext = receiptFile.name.split(".").pop() || "bin";
+        const path = `${user?.id || "anon"}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("receipts").upload(path, receiptFile, { upsert: false });
+        if (upErr) throw upErr;
+        receipt_url = path;
+      }
+      const { error } = await supabase.from("financial_transactions").insert({ ...payload, receipt_url, recorded_by: user?.id });
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Transaction recorded"); qc.invalidateQueries({ queryKey: ["fin_txn"] }); qc.invalidateQueries({ queryKey: ["fin_accounts"] }); },
