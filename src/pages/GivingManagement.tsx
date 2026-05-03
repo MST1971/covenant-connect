@@ -124,9 +124,16 @@ const GivingManagement = () => {
               <p className="text-xs text-muted-foreground">{filtered.length} record{filtered.length !== 1 ? "s" : ""} • Total: ₦{totalAmount.toLocaleString()}</p>
             </div>
           </div>
-          <Button onClick={() => setShowForm(true)} className="gradient-gold text-accent-foreground font-semibold shadow-gold hover:opacity-90 gap-1.5" size="sm">
-            <Plus className="h-4 w-4" /> Record Giving
-          </Button>
+          <div className="flex gap-2">
+            {canManageSettings && (
+              <Button variant="outline" size="sm" onClick={() => setShowSettings(true)} className="gap-1.5">
+                <Settings className="h-4 w-4" /> Receipts
+              </Button>
+            )}
+            <Button onClick={() => setShowForm(true)} className="gradient-gold text-accent-foreground font-semibold shadow-gold hover:opacity-90 gap-1.5" size="sm">
+              <Plus className="h-4 w-4" /> Record Giving
+            </Button>
+          </div>
         </div>
       </header>
 
