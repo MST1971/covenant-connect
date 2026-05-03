@@ -387,12 +387,14 @@ const SummaryCard = ({ label, value, icon: Icon, tone }: any) => {
 
 const TransactionsPanel = ({ kind, canEdit, transactions, accounts, categories, onAdd, onDelete, onExport }: any) => {
   const [open, setOpen] = useState(false);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [form, setForm] = useState<any>({ txn_date: new Date().toISOString().split("T")[0], amount: "", category_id: "", account_id: "", payee_or_payer: "", description: "", reference: "", payment_method: "cash" });
 
   const submit = () => {
     if (!form.amount || !form.account_id) return toast.error("Amount and account required");
-    onAdd({ ...form, amount: Number(form.amount) });
+    onAdd({ ...form, amount: Number(form.amount), receiptFile });
     setOpen(false);
+    setReceiptFile(null);
     setForm({ ...form, amount: "", payee_or_payer: "", description: "", reference: "" });
   };
 
