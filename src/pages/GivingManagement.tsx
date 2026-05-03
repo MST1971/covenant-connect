@@ -280,6 +280,13 @@ const GivingManagement = () => {
           onClose={() => setReceiptRecord(null)}
         />
       )}
+
+      <ReceiptSettingsDialog
+        open={showSettings}
+        onOpenChange={setShowSettings}
+        settings={settings}
+        onSaved={() => qc.invalidateQueries({ queryKey: ["app_settings", "giving_receipts"] })}
+      />
     </div>
   );
 };
