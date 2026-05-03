@@ -260,6 +260,14 @@ const GivingManagement = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {receiptRecord && (
+        <GivingReceipt
+          record={receiptRecord}
+          footerNote={settings?.footer_note}
+          onClose={() => setReceiptRecord(null)}
+        />
+      )}
     </div>
   );
 };
