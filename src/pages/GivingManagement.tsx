@@ -72,7 +72,7 @@ const GivingManagement = () => {
     mutationFn: async () => {
       if (!form.profile_id) throw new Error("Select a member");
       if (!form.amount || Number(form.amount) <= 0) throw new Error("Enter a valid amount");
-      const { error } = await supabase.from("giving_records").insert({
+      const { data, error } = await supabase.from("giving_records").insert({
         profile_id: form.profile_id,
         amount: Number(form.amount),
         giving_type: form.giving_type,
@@ -81,14 +81,16 @@ const GivingManagement = () => {
         reference: form.reference.trim() || null,
         notes: form.notes.trim() || null,
         recorded_by: user?.id || null,
-      });
+      }).select("*, profiles(full_name, member_code)").single();
       if (error) throw error;
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (rec: any) => {
       qc.invalidateQueries({ queryKey: ["giving-records"] });
       setShowForm(false);
       setForm({ profile_id: "", amount: "", giving_type: "tithe", payment_method: "cash", date: new Date().toISOString().split("T")[0], reference: "", notes: "" });
       toast({ title: "Giving recorded!" });
+      if (rec && receiptEnabled(rec.giving_type)) setReceiptRecord(rec);
     },
     onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
