@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import {
   ArrowLeft, Plus, Wallet, TrendingUp, TrendingDown, ArrowLeftRight,
-  Target, BarChart3, Repeat, Tags, Download, Trash2, Edit, AlertCircle,
+  Target, BarChart3, Repeat, Tags, Download, Trash2, Edit, AlertCircle, Paperclip, Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
