@@ -442,6 +442,15 @@ const TransactionsPanel = ({ kind, canEdit, transactions, accounts, categories, 
                   </div>
                 </div>
                 <div><Label>Description</Label><Textarea rows={2} value={form.description} onChange={e => setForm({...form, description: e.target.value})} /></div>
+                <div>
+                  <Label>Receipt / Supporting Document</Label>
+                  <Input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    onChange={e => setReceiptFile(e.target.files?.[0] || null)}
+                  />
+                  {receiptFile && <p className="text-xs text-muted-foreground mt-1">📎 {receiptFile.name} ({(receiptFile.size/1024).toFixed(0)} KB)</p>}
+                </div>
               </div>
               <DialogFooter><Button onClick={submit}>Save</Button></DialogFooter>
             </DialogContent>
