@@ -291,4 +291,74 @@ const GivingManagement = () => {
   );
 };
 
+const ReceiptSettingsDialog = ({ open, onOpenChange, settings, onSaved }: any) => {
+  const { toast } = useToast();
+  const [enabled, setEnabled] = useState<boolean>(settings?.enabled ?? true);
+  const [types, setTypes] = useState<Record<string, boolean>>(settings?.types || {});
+  const [footer, setFooter] = useState<string>(settings?.footer_note || "");
+  const [saving, setSaving] = useState(false);
+
+  // sync when dialog opens
+  useState(() => {
+    setEnabled(settings?.enabled ?? true);
+    setTypes(settings?.types || {});
+    setFooter(settings?.footer_note || "");
+    return undefined;
+  });
+
+  const save = async () => {
+    setSaving(true);
+    const value = { enabled, types, footer_note: footer };
+    const { error } = await supabase.from("app_settings").update({ value }).eq("key", "giving_receipts");
+    setSaving(false);
+    if (error) return toast({ title: "Error", description: error.message, variant: "destructive" });
+    toast({ title: "Receipt settings saved" });
+    onSaved?.();
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>Giving Receipt Settings</DialogTitle></DialogHeader>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-3 rounded-md border">
+            <div>
+              <Label className="text-sm">Enable receipts</Label>
+              <p className="text-xs text-muted-foreground">Master switch for all giving receipts</p>
+            </div>
+            <Switch checked={enabled} onCheckedChange={setEnabled} />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm">Per giving type</Label>
+            <div className="border rounded-md divide-y">
+              {givingTypes.map(t => (
+                <div key={t} className="flex items-center justify-between p-2.5">
+                  <span className="text-sm capitalize">{t.replace(/_/g, " ")}</span>
+                  <Switch
+                    disabled={!enabled}
+                    checked={types[t] !== false}
+                    onCheckedChange={(v) => setTypes(prev => ({ ...prev, [t]: v }))}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-sm">Receipt footer note</Label>
+            <Textarea rows={2} value={footer} onChange={e => setFooter(e.target.value)} placeholder="Thank you for your faithful giving..." />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={save} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+
 export default GivingManagement;
