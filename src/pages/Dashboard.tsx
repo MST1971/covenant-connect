@@ -68,11 +68,11 @@ const Dashboard = () => {
     <div className="min-h-screen bg-background flex">
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 gradient-navy text-primary-foreground transform transition-transform duration-200 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 gradient-navy text-primary-foreground transform transition-transform duration-200 lg:translate-x-0 flex flex-col ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="p-5 flex items-center gap-3 border-b border-primary-foreground/10">
+        <div className="p-5 flex items-center gap-3 border-b border-primary-foreground/10 shrink-0">
           <img src={churchLogo} alt="CBC" className="h-10 w-10 rounded-full" />
           <div className="flex-1 min-w-0">
             <h2 className="text-sm font-bold truncate" style={{ fontFamily: 'var(--font-display)' }}>
@@ -84,7 +84,7 @@ const Dashboard = () => {
             <X className="h-5 w-5" />
           </button>
         </div>
-        <nav className="p-3 space-y-1">
+        <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           {navItems.map((item) => (
             <button
               key={item.label}
@@ -100,7 +100,7 @@ const Dashboard = () => {
             </button>
           ))}
         </nav>
-        <div className="absolute bottom-4 left-3 right-3">
+        <div className="p-3 border-t border-primary-foreground/10 shrink-0">
           <button
             onClick={async () => { await signOut(); navigate("/"); }}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-primary-foreground/60 hover:bg-primary-foreground/10 transition-colors"
