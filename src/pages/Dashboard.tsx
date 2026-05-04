@@ -91,20 +91,25 @@ const Dashboard = () => {
           </button>
         </div>
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-          {navItems.map((item) => (
-            <button
-              key={item.label}
-              onClick={() => item.path && navigate(item.path)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                item.active
-                  ? "bg-primary-foreground/15 text-accent"
-                  : "hover:bg-primary-foreground/10 text-primary-foreground/80"
-              }`}
-            >
-              <item.icon className="h-4 w-4" />
-              {item.label}
-            </button>
-          ))}
+          {navItems.map((item) => {
+            const isActive = item.path === location.pathname;
+            return (
+              <button
+                key={item.label}
+                ref={isActive ? activeRef : undefined}
+                onClick={() => item.path && navigate(item.path)}
+                aria-current={isActive ? "page" : undefined}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                  isActive
+                    ? "bg-primary-foreground/15 text-accent border-l-2 border-accent font-semibold"
+                    : "hover:bg-primary-foreground/10 text-primary-foreground/80"
+                }`}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </button>
+            );
+          })}
         </nav>
         <div className="p-3 border-t border-primary-foreground/10 shrink-0">
           <button
