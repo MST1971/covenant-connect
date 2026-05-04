@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import {
@@ -13,19 +13,19 @@ import churchLogo from "@/assets/church-logo.png";
 import BirthdayReminders from "@/components/BirthdayReminders";
 
 const allNavItems = [
-  { icon: Home, label: "Dashboard", path: "/dashboard", active: true, permission: "dashboard" },
+  { icon: Home, label: "Dashboard", path: "/dashboard", permission: "dashboard" },
   { icon: Users, label: "Members", path: "/members", permission: "members" },
   { icon: UserPlus, label: "Visitors", path: "/visitors", permission: "visitors" },
   { icon: Building2, label: "Departments", path: "/departments", permission: "departments" },
   { icon: Calendar, label: "Programs", path: "/programs", permission: "programs" },
   { icon: QrCode, label: "Scan Attendance", path: "/attendance/scan", permission: "attendance.scan" },
   { icon: Shield, label: "Attendance Reports", path: "/attendance/reports", permission: "attendance.reports" },
-  { icon: MessageSquare, label: "Messages", path: "", permission: "messages" },
+  { icon: MessageSquare, label: "Messages", path: "/messages", permission: "messages" },
   { icon: Heart, label: "Giving", path: "/giving", permission: "giving" },
   { icon: BarChart3, label: "Financial Reports", path: "/financial-reports", permission: "reports" },
   { icon: FileText, label: "Finance Center", path: "/finance", permission: "finance" },
   { icon: UserCog, label: "Role Management", path: "/roles", permission: "roles.manage" },
-  { icon: Settings, label: "Settings", path: "", permission: "settings" },
+  { icon: Settings, label: "Settings", path: "/settings", permission: "settings" },
 ];
 
 const stats = [
