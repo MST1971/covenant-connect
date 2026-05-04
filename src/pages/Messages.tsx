@@ -16,7 +16,7 @@ import { toast } from "sonner";
 interface Member {
   id: string;
   full_name: string;
-  phone: string | null;
+  phone_number: string | null;
 }
 
 const Messages = () => {
@@ -32,8 +32,8 @@ const Messages = () => {
     if (!isAdmin) return;
     (async () => {
       const { data } = await supabase
-        .from("members")
-        .select("id, full_name, phone")
+        .from("profiles")
+        .select("id, full_name, phone_number")
         .order("full_name");
       if (data) setMembers(data as any);
     })();
