@@ -61,10 +61,10 @@ const Messages = () => {
 
   const sendWhatsApp = () => {
     if (!message.trim()) return toast.error("Type a message first");
-    const recipients = members.filter((m) => selected.has(m.id) && m.phone);
+    const recipients = members.filter((m) => selected.has(m.id) && m.phone_number);
     if (recipients.length === 0) return toast.error("Select at least one member with a phone number");
     recipients.forEach((m, i) => {
-      const phone = (m.phone || "").replace(/\D/g, "");
+      const phone = (m.phone_number || "").replace(/\D/g, "");
       const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
       setTimeout(() => window.open(url, "_blank"), i * 250);
     });
@@ -155,7 +155,7 @@ const Messages = () => {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{m.full_name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {m.phone || "No phone number"}
+                          {m.phone_number || "No phone number"}
                         </p>
                       </div>
                     </label>

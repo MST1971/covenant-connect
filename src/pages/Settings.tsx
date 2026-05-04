@@ -38,10 +38,10 @@ const Settings = () => {
       if (user) {
         const { data: p } = await supabase
           .from("profiles")
-          .select("full_name, phone")
+          .select("full_name, phone_number")
           .eq("id", user.id)
           .maybeSingle();
-        if (p) setProfile({ full_name: p.full_name || "", phone: p.phone || "" });
+        if (p) setProfile({ full_name: p.full_name || "", phone: p.phone_number || "" });
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -69,7 +69,7 @@ const Settings = () => {
     if (!user) return;
     const { error } = await supabase
       .from("profiles")
-      .update({ full_name: profile.full_name, phone: profile.phone })
+      .update({ full_name: profile.full_name, phone_number: profile.phone })
       .eq("id", user.id);
     if (error) return toast.error(error.message);
     toast.success("Profile updated");
