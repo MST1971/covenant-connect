@@ -68,11 +68,11 @@ const Dashboard = () => {
     <div className="min-h-screen bg-background flex">
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 gradient-navy text-primary-foreground transform transition-transform duration-200 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 gradient-navy text-primary-foreground transform transition-transform duration-200 lg:translate-x-0 flex flex-col ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="p-5 flex items-center gap-3 border-b border-primary-foreground/10">
+        <div className="p-5 flex items-center gap-3 border-b border-primary-foreground/10 shrink-0">
           <img src={churchLogo} alt="CBC" className="h-10 w-10 rounded-full" />
           <div className="flex-1 min-w-0">
             <h2 className="text-sm font-bold truncate" style={{ fontFamily: 'var(--font-display)' }}>
