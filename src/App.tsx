@@ -22,6 +22,8 @@ import Visitors from "./pages/Visitors.tsx";
 import GivingManagement from "./pages/GivingManagement.tsx";
 import FinancialReports from "./pages/FinancialReports.tsx";
 import Finance from "./pages/Finance.tsx";
+import Messages from "./pages/Messages.tsx";
+import SettingsPage from "./pages/Settings.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -73,6 +75,12 @@ const App = () => (
             } />
             <Route path="/finance" element={
               <ProtectedRoute><Finance /></ProtectedRoute>
+            } />
+            <Route path="/messages" element={
+              <ProtectedRoute><Messages /></ProtectedRoute>
+            } />
+            <Route path="/settings" element={
+              <ProtectedRoute><SettingsPage /></ProtectedRoute>
             } />
             <Route path="/roles" element={
               <ProtectedRoute><RoleManagement /></ProtectedRoute>
