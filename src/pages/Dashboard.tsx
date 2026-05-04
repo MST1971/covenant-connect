@@ -47,7 +47,13 @@ const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAdmin, isLoading: roleLoading, hasPermission, isSuperAdmin } = useUserRole();
+  const activeRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    activeRef.current?.scrollIntoView({ block: "nearest" });
+  }, [location.pathname, roleLoading]);
 
   // Redirect non-admin users to member dashboard
   if (!roleLoading && !isAdmin) {
