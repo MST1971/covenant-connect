@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import {
@@ -13,19 +13,19 @@ import churchLogo from "@/assets/church-logo.png";
 import BirthdayReminders from "@/components/BirthdayReminders";
 
 const allNavItems = [
-  { icon: Home, label: "Dashboard", path: "/dashboard", active: true, permission: "dashboard" },
+  { icon: Home, label: "Dashboard", path: "/dashboard", permission: "dashboard" },
   { icon: Users, label: "Members", path: "/members", permission: "members" },
   { icon: UserPlus, label: "Visitors", path: "/visitors", permission: "visitors" },
   { icon: Building2, label: "Departments", path: "/departments", permission: "departments" },
   { icon: Calendar, label: "Programs", path: "/programs", permission: "programs" },
   { icon: QrCode, label: "Scan Attendance", path: "/attendance/scan", permission: "attendance.scan" },
   { icon: Shield, label: "Attendance Reports", path: "/attendance/reports", permission: "attendance.reports" },
-  { icon: MessageSquare, label: "Messages", path: "", permission: "messages" },
+  { icon: MessageSquare, label: "Messages", path: "/messages", permission: "messages" },
   { icon: Heart, label: "Giving", path: "/giving", permission: "giving" },
   { icon: BarChart3, label: "Financial Reports", path: "/financial-reports", permission: "reports" },
   { icon: FileText, label: "Finance Center", path: "/finance", permission: "finance" },
   { icon: UserCog, label: "Role Management", path: "/roles", permission: "roles.manage" },
-  { icon: Settings, label: "Settings", path: "", permission: "settings" },
+  { icon: Settings, label: "Settings", path: "/settings", permission: "settings" },
 ];
 
 const stats = [
@@ -47,7 +47,13 @@ const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAdmin, isLoading: roleLoading, hasPermission, isSuperAdmin } = useUserRole();
+  const activeRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    activeRef.current?.scrollIntoView({ block: "nearest" });
+  }, [location.pathname, roleLoading]);
 
   // Redirect non-admin users to member dashboard
   if (!roleLoading && !isAdmin) {
@@ -85,20 +91,25 @@ const Dashboard = () => {
           </button>
         </div>
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-          {navItems.map((item) => (
-            <button
-              key={item.label}
-              onClick={() => item.path && navigate(item.path)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                item.active
-                  ? "bg-primary-foreground/15 text-accent"
-                  : "hover:bg-primary-foreground/10 text-primary-foreground/80"
-              }`}
-            >
-              <item.icon className="h-4 w-4" />
-              {item.label}
-            </button>
-          ))}
+          {navItems.map((item) => {
+            const isActive = item.path === location.pathname;
+            return (
+              <button
+                key={item.label}
+                ref={isActive ? activeRef : undefined}
+                onClick={() => item.path && navigate(item.path)}
+                aria-current={isActive ? "page" : undefined}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                  isActive
+                    ? "bg-primary-foreground/15 text-accent border-l-2 border-accent font-semibold"
+                    : "hover:bg-primary-foreground/10 text-primary-foreground/80"
+                }`}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </button>
+            );
+          })}
         </nav>
         <div className="p-3 border-t border-primary-foreground/10 shrink-0">
           <button
