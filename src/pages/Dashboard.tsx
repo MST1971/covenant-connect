@@ -52,8 +52,13 @@ const Dashboard = () => {
   const activeRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
+    // Only auto-scroll when the sidebar is actually visible:
+    // - On mobile (lg breakpoint hidden), only when user opened it
+    // - On desktop (lg+), it's always visible
+    const isLargeScreen = typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches;
+    if (!sidebarOpen && !isLargeScreen) return;
     activeRef.current?.scrollIntoView({ block: "nearest" });
-  }, [location.pathname, roleLoading]);
+  }, [location.pathname, roleLoading, sidebarOpen]);
 
   // Redirect non-admin users to member dashboard
   if (!roleLoading && !isAdmin) {
