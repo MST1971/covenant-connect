@@ -182,12 +182,15 @@ const SUPPORTED_VARIABLES = [
 ];
 
 const renderMessage = (template: string, recipient?: Recipient): string => {
+  const replaceAll = (str: string, token: string, value: string) =>
+    str.split(token).join(value);
   if (!recipient) {
-    return template
-      .replaceAll("{full_name}", "Friend")
-      .replaceAll("{first_name}", "Friend")
-      .replaceAll("{phone}", "")
-      .replaceAll("{status}", "");
+    let r = template;
+    r = replaceAll(r, "{full_name}", "Friend");
+    r = replaceAll(r, "{first_name}", "Friend");
+    r = replaceAll(r, "{phone}", "");
+    r = replaceAll(r, "{status}", "");
+    return r;
   }
   const fullName = recipient.full_name || "Friend";
   const firstName = fullName.split(" ")[0] || "Friend";
@@ -196,11 +199,12 @@ const renderMessage = (template: string, recipient?: Recipient): string => {
     recipient.source === "member"
       ? (recipient as Member).membership_status || ""
       : "Visitor";
-  return template
-    .replaceAll("{full_name}", fullName)
-    .replaceAll("{first_name}", firstName)
-    .replaceAll("{phone}", phone)
-    .replaceAll("{status}", status);
+  let r = template;
+  r = replaceAll(r, "{full_name}", fullName);
+  r = replaceAll(r, "{first_name}", firstName);
+  r = replaceAll(r, "{phone}", phone);
+  r = replaceAll(r, "{status}", status);
+  return r;
 };
 
 const Messages = () => {
