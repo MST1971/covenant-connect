@@ -274,6 +274,112 @@ const MemberDashboard = () => {
             </Card>
           </section>
 
+          {/* Transfer / Send Money */}
+          <section id="transfer">
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-3 flex flex-row items-center justify-between flex-wrap gap-2">
+                <CardTitle style={{ fontFamily: 'var(--font-display)' }} className="flex items-center gap-2">
+                  <Banknote className="h-5 w-5 text-secondary" /> Send Tithe / Offering
+                </CardTitle>
+                <Dialog open={transferOpen} onOpenChange={setTransferOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" className="gradient-gold text-accent-foreground">
+                      <Send className="h-3.5 w-3.5 mr-1" /> New Transfer
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Submit Transfer</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-3">
+                      {(churchAccount?.account_number || churchAccount?.bank_name) && (
+                        <div className="rounded-lg bg-muted/50 border p-3 text-xs space-y-0.5">
+                          <p className="font-semibold">Pay to:</p>
+                          <p>{churchAccount.account_name || "Covenant Baptist Church Suleja"}</p>
+                          <p>{churchAccount.bank_name} {churchAccount.account_number && `— ${churchAccount.account_number}`}</p>
+                        </div>
+                      )}
+                      <div>
+                        <Label>Amount (₦)</Label>
+                        <Input type="number" min="1" step="0.01" value={tForm.amount} onChange={(e) => setTForm({ ...tForm, amount: e.target.value })} />
+                      </div>
+                      <div>
+                        <Label>Narration / Type</Label>
+                        <Select value={tForm.giving_type} onValueChange={(v) => setTForm({ ...tForm, giving_type: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="tithe">Tithe</SelectItem>
+                            <SelectItem value="offering">Offering</SelectItem>
+                            <SelectItem value="thanksgiving">Thanksgiving</SelectItem>
+                            <SelectItem value="building">Building Project</SelectItem>
+                            <SelectItem value="missions">Missions</SelectItem>
+                            <SelectItem value="welfare">Welfare</SelectItem>
+                            <SelectItem value="seed">Seed / Pledge</SelectItem>
+                            <SelectItem value="custom">Custom Giving</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Payment Method</Label>
+                        <Select value={tForm.payment_method} onValueChange={(v) => setTForm({ ...tForm, payment_method: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                            <SelectItem value="cash">Cash</SelectItem>
+                            <SelectItem value="ussd">USSD</SelectItem>
+                            <SelectItem value="pos">POS</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Bank/Transfer Reference (optional)</Label>
+                        <Input placeholder="e.g. transaction ID" value={tForm.payment_reference} onChange={(e) => setTForm({ ...tForm, payment_reference: e.target.value })} />
+                      </div>
+                      <div>
+                        <Label>Date</Label>
+                        <Input type="date" value={tForm.transfer_date} onChange={(e) => setTForm({ ...tForm, transfer_date: e.target.value })} />
+                      </div>
+                      <div>
+                        <Label>Note (optional)</Label>
+                        <Textarea rows={2} value={tForm.narration} onChange={(e) => setTForm({ ...tForm, narration: e.target.value })} />
+                      </div>
+                      <Button className="w-full" onClick={() => createTransfer.mutate()} disabled={createTransfer.isPending}>
+                        {createTransfer.isPending ? "Submitting..." : "Submit for Approval"}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Make your payment to the church account, then record it here. Finance will verify and approve.
+                </p>
+                {myTransfers && myTransfers.length > 0 ? (
+                  <div className="space-y-2">
+                    {myTransfers.map((t: any) => (
+                      <div key={t.id} className="flex items-center justify-between py-2 border-b border-muted last:border-0">
+                        <div>
+                          <p className="text-sm font-medium capitalize">{t.giving_type} — ₦{Number(t.amount).toLocaleString()}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(t.transfer_date).toLocaleDateString()} • {t.payment_method}{t.payment_reference ? ` • Ref: ${t.payment_reference}` : ""}
+                          </p>
+                        </div>
+                        <Badge variant="outline" className={
+                          t.status === "approved" ? "bg-primary/10 text-primary" :
+                          t.status === "rejected" ? "bg-destructive/10 text-destructive" :
+                          "bg-accent/10 text-accent-foreground"
+                        }>{t.status}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-sm">No transfers yet.</p>
+                )}
+              </CardContent>
+            </Card>
+          </section>
+
           {/* Departments */}
           <section id="departments">
             <Card className="border-0 shadow-sm">
