@@ -7,6 +7,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import {
   ArrowLeft, Plus, Wallet, TrendingUp, TrendingDown, ArrowLeftRight,
   Target, BarChart3, Repeat, Tags, Download, Trash2, Edit, AlertCircle, Paperclip, Upload,
+  CheckCircle2, XCircle, Inbox,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
