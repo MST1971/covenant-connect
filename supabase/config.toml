@@ -2,3 +2,9 @@ project_id = "rnkfppkaatpuucinycwi"
 
 [functions.create-admin-account]
 verify_jwt = false
+
+[functions.admin-reset-member-password]
+verify_jwt = false
+
+[functions.forgot-password-temp]
+verify_jwt = false

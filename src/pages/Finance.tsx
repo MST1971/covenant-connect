@@ -7,6 +7,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import {
   ArrowLeft, Plus, Wallet, TrendingUp, TrendingDown, ArrowLeftRight,
   Target, BarChart3, Repeat, Tags, Download, Trash2, Edit, AlertCircle, Paperclip, Upload,
+  CheckCircle2, XCircle, Inbox,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -185,6 +186,91 @@ const Finance = () => {
     onError: (e: any) => toast.error(e.message),
   });
 
+  // ============ MEMBER TRANSFER APPROVALS ============
+  const { data: pendingTransfers = [] } = useQuery({
+    queryKey: ["member_transfers_pending"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("member_transfers")
+        .select("*, profiles!member_transfers_profile_id_fkey(full_name, email, phone_number)")
+        .order("created_at", { ascending: false });
+      if (error) {
+        // fallback without join if FK relationship name differs
+        const { data: d2, error: e2 } = await supabase.from("member_transfers").select("*").order("created_at", { ascending: false });
+        if (e2) throw e2;
+        return d2;
+      }
+      return data;
+    },
+    enabled: canView,
+  });
+
+  const reviewTransfer = useMutation({
+    mutationFn: async ({ transfer, approve, notes }: { transfer: any; approve: boolean; notes?: string }) => {
+      if (!approve) {
+        const { error } = await supabase.from("member_transfers").update({
+          status: "rejected", reviewed_by: user?.id, reviewed_at: new Date().toISOString(), review_notes: notes || null,
+        }).eq("id", transfer.id);
+        if (error) throw error;
+        return;
+      }
+      // Approve: 1) giving_records, 2) financial_transactions (income), 3) update transfer
+      const defaultAccount = accounts[0];
+      if (!defaultAccount) throw new Error("Create at least one financial account first.");
+
+      // Match income category by giving_type name (case-insensitive), else use first income category
+      const incomeCats = categories.filter((c: any) => c.kind === "income");
+      const matchCat = incomeCats.find((c: any) => c.name.toLowerCase().includes(transfer.giving_type.toLowerCase())) || incomeCats[0];
+
+      const { data: gr, error: gErr } = await supabase.from("giving_records").insert({
+        profile_id: transfer.profile_id,
+        amount: transfer.amount,
+        giving_type: transfer.giving_type,
+        date: transfer.transfer_date,
+        payment_method: transfer.payment_method,
+        reference: transfer.payment_reference,
+        notes: transfer.narration,
+        recorded_by: user?.id,
+      }).select("id").single();
+      if (gErr) throw gErr;
+
+      const { data: ft, error: fErr } = await supabase.from("financial_transactions").insert({
+        kind: "income",
+        amount: transfer.amount,
+        account_id: defaultAccount.id,
+        category_id: matchCat?.id || null,
+        txn_date: transfer.transfer_date,
+        payee_or_payer: (transfer as any).profiles?.full_name || "Member",
+        description: `${transfer.giving_type}${transfer.narration ? ` — ${transfer.narration}` : ""}`,
+        reference: transfer.payment_reference,
+        payment_method: transfer.payment_method,
+        receipt_url: transfer.receipt_url,
+        giving_record_id: gr.id,
+        status: "posted",
+        recorded_by: user?.id,
+        approved_by: user?.id,
+      }).select("id").single();
+      if (fErr) throw fErr;
+
+      const { error: uErr } = await supabase.from("member_transfers").update({
+        status: "approved",
+        reviewed_by: user?.id,
+        reviewed_at: new Date().toISOString(),
+        review_notes: notes || null,
+        giving_record_id: gr.id,
+        financial_transaction_id: ft.id,
+      }).eq("id", transfer.id);
+      if (uErr) throw uErr;
+    },
+    onSuccess: () => {
+      toast.success("Done");
+      qc.invalidateQueries({ queryKey: ["member_transfers_pending"] });
+      qc.invalidateQueries({ queryKey: ["fin_txn"] });
+      qc.invalidateQueries({ queryKey: ["fin_accounts"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const exportCSV = (rows: any[], filename: string) => {
     if (!rows.length) return toast.error("Nothing to export");
     const headers = Object.keys(rows[0]);
@@ -241,6 +327,11 @@ const Finance = () => {
             <TabsTrigger value="income">Income</TabsTrigger>
             <TabsTrigger value="expense">Expenditure</TabsTrigger>
             <TabsTrigger value="transfers">Transfers</TabsTrigger>
+            <TabsTrigger value="approvals">
+              Approvals{(pendingTransfers as any[]).filter((t: any) => t.status === "pending").length > 0 && (
+                <Badge className="ml-1.5 h-4 px-1 text-[10px]">{(pendingTransfers as any[]).filter((t: any) => t.status === "pending").length}</Badge>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="budget">Budget</TabsTrigger>
             <TabsTrigger value="comparative">Budget vs Actual</TabsTrigger>
             <TabsTrigger value="recurring">Recurrent</TabsTrigger>
@@ -332,6 +423,54 @@ const Finance = () => {
               onAdd={(p) => addTxn.mutate({ ...p, kind: "transfer" })}
               onDelete={(id) => deleteTxn.mutate(id)}
             />
+          </TabsContent>
+
+          {/* APPROVALS */}
+          <TabsContent value="approvals" className="mt-4">
+            <Card>
+              <CardHeader><CardTitle className="text-base flex items-center gap-2"><Inbox className="h-4 w-4" /> Member Transfer Approvals</CardTitle></CardHeader>
+              <CardContent>
+                {(pendingTransfers as any[]).length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-6 text-center">No transfer submissions yet.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {(pendingTransfers as any[]).map((t: any) => (
+                      <div key={t.id} className="border rounded-lg p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-semibold text-sm">{t.profiles?.full_name || "Member"}</p>
+                            <Badge variant="outline" className="capitalize text-[10px]">{t.giving_type}</Badge>
+                            <Badge variant="outline" className={
+                              t.status === "approved" ? "bg-primary/10 text-primary text-[10px]" :
+                              t.status === "rejected" ? "bg-destructive/10 text-destructive text-[10px]" :
+                              "bg-accent/10 text-accent-foreground text-[10px]"
+                            }>{t.status}</Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {fmt(t.amount)} • {new Date(t.transfer_date).toLocaleDateString()} • {t.payment_method}
+                            {t.payment_reference ? ` • Ref: ${t.payment_reference}` : ""}
+                          </p>
+                          {t.narration && <p className="text-xs mt-1 italic">"{t.narration}"</p>}
+                        </div>
+                        {t.status === "pending" && canEdit && (
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline" onClick={() => {
+                              const notes = prompt("Reason for rejection (optional):") || "";
+                              reviewTransfer.mutate({ transfer: t, approve: false, notes });
+                            }} disabled={reviewTransfer.isPending}>
+                              <XCircle className="h-3.5 w-3.5 mr-1" /> Reject
+                            </Button>
+                            <Button size="sm" className="gradient-gold text-accent-foreground" onClick={() => reviewTransfer.mutate({ transfer: t, approve: true })} disabled={reviewTransfer.isPending}>
+                              <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Approve
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* BUDGET */}

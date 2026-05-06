@@ -691,6 +691,69 @@ export type Database = {
         }
         Relationships: []
       }
+      member_transfers: {
+        Row: {
+          amount: number
+          created_at: string
+          financial_transaction_id: string | null
+          giving_record_id: string | null
+          giving_type: string
+          id: string
+          narration: string | null
+          payment_method: string
+          payment_reference: string | null
+          profile_id: string
+          receipt_url: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          transfer_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          financial_transaction_id?: string | null
+          giving_record_id?: string | null
+          giving_type?: string
+          id?: string
+          narration?: string | null
+          payment_method?: string
+          payment_reference?: string | null
+          profile_id: string
+          receipt_url?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          transfer_date?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          financial_transaction_id?: string | null
+          giving_record_id?: string | null
+          giving_type?: string
+          id?: string
+          narration?: string | null
+          payment_method?: string
+          payment_reference?: string | null
+          profile_id?: string
+          receipt_url?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          transfer_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
@@ -834,6 +897,48 @@ export type Database = {
           is_active?: boolean
           name?: string
           start_time?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      scheduled_messages: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          message_body: string
+          recipient_audience: string
+          recipient_ids: Json
+          scheduled_for: string
+          sent_at: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message_body: string
+          recipient_audience?: string
+          recipient_ids?: Json
+          scheduled_for: string
+          sent_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message_body?: string
+          recipient_audience?: string
+          recipient_ids?: Json
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+          title?: string
           updated_at?: string
         }
         Relationships: []

@@ -1,16 +1,22 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
   User, Calendar, Users, Heart, LogOut, Clock, Shield,
-  Building2, Edit, QrCode, Menu, X, DollarSign
+  Building2, Edit, QrCode, Menu, X, DollarSign, Send, Banknote
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useState } from "react";
+import { toast } from "sonner";
 import churchLogo from "@/assets/church-logo.png";
 
 const MemberDashboard = () => {
@@ -68,12 +74,65 @@ const MemberDashboard = () => {
     enabled: !!profile,
   });
 
+  const qc = useQueryClient();
+
+  const { data: myTransfers } = useQuery({
+    queryKey: ["my-transfers", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("member_transfers").select("*").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(20);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const { data: churchAccount } = useQuery({
+    queryKey: ["church-bank-account"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("app_settings").select("value").eq("key", "church_bank_account").maybeSingle();
+      if (error) throw error;
+      return (data?.value as any) || {};
+    },
+  });
+
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [tForm, setTForm] = useState({
+    amount: "", giving_type: "tithe", payment_reference: "", payment_method: "bank_transfer", narration: "", transfer_date: new Date().toISOString().slice(0, 10),
+  });
+
+  const createTransfer = useMutation({
+    mutationFn: async () => {
+      if (!profile?.id || !user?.id) throw new Error("Profile not loaded");
+      const amount = parseFloat(tForm.amount);
+      if (!amount || amount <= 0) throw new Error("Enter a valid amount");
+      const { error } = await supabase.from("member_transfers").insert({
+        profile_id: profile.id,
+        user_id: user.id,
+        amount,
+        giving_type: tForm.giving_type,
+        payment_reference: tForm.payment_reference || null,
+        payment_method: tForm.payment_method,
+        narration: tForm.narration || null,
+        transfer_date: tForm.transfer_date,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Transfer submitted for approval");
+      qc.invalidateQueries({ queryKey: ["my-transfers"] });
+      setTransferOpen(false);
+      setTForm({ amount: "", giving_type: "tithe", payment_reference: "", payment_method: "bank_transfer", narration: "", transfer_date: new Date().toISOString().slice(0, 10) });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const getInitials = (name: string) => name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 
   const navItems = [
     { icon: User, label: "My Profile", id: "profile" },
     { icon: Shield, label: "My Attendance", id: "attendance" },
     { icon: DollarSign, label: "My Giving", id: "giving" },
+    { icon: Send, label: "Send Tithe / Offering", id: "transfer" },
     { icon: Building2, label: "My Departments", id: "departments" },
     { icon: Users, label: "My Family", id: "family" },
   ];
@@ -210,6 +269,112 @@ const MemberDashboard = () => {
                   </div>
                 ) : (
                   <p className="text-muted-foreground text-sm">No giving records yet.</p>
+                )}
+              </CardContent>
+            </Card>
+          </section>
+
+          {/* Transfer / Send Money */}
+          <section id="transfer">
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-3 flex flex-row items-center justify-between flex-wrap gap-2">
+                <CardTitle style={{ fontFamily: 'var(--font-display)' }} className="flex items-center gap-2">
+                  <Banknote className="h-5 w-5 text-secondary" /> Send Tithe / Offering
+                </CardTitle>
+                <Dialog open={transferOpen} onOpenChange={setTransferOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" className="gradient-gold text-accent-foreground">
+                      <Send className="h-3.5 w-3.5 mr-1" /> New Transfer
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Submit Transfer</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-3">
+                      {(churchAccount?.account_number || churchAccount?.bank_name) && (
+                        <div className="rounded-lg bg-muted/50 border p-3 text-xs space-y-0.5">
+                          <p className="font-semibold">Pay to:</p>
+                          <p>{churchAccount.account_name || "Covenant Baptist Church Suleja"}</p>
+                          <p>{churchAccount.bank_name} {churchAccount.account_number && `— ${churchAccount.account_number}`}</p>
+                        </div>
+                      )}
+                      <div>
+                        <Label>Amount (₦)</Label>
+                        <Input type="number" min="1" step="0.01" value={tForm.amount} onChange={(e) => setTForm({ ...tForm, amount: e.target.value })} />
+                      </div>
+                      <div>
+                        <Label>Narration / Type</Label>
+                        <Select value={tForm.giving_type} onValueChange={(v) => setTForm({ ...tForm, giving_type: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="tithe">Tithe</SelectItem>
+                            <SelectItem value="offering">Offering</SelectItem>
+                            <SelectItem value="thanksgiving">Thanksgiving</SelectItem>
+                            <SelectItem value="building">Building Project</SelectItem>
+                            <SelectItem value="missions">Missions</SelectItem>
+                            <SelectItem value="welfare">Welfare</SelectItem>
+                            <SelectItem value="seed">Seed / Pledge</SelectItem>
+                            <SelectItem value="custom">Custom Giving</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Payment Method</Label>
+                        <Select value={tForm.payment_method} onValueChange={(v) => setTForm({ ...tForm, payment_method: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                            <SelectItem value="cash">Cash</SelectItem>
+                            <SelectItem value="ussd">USSD</SelectItem>
+                            <SelectItem value="pos">POS</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Bank/Transfer Reference (optional)</Label>
+                        <Input placeholder="e.g. transaction ID" value={tForm.payment_reference} onChange={(e) => setTForm({ ...tForm, payment_reference: e.target.value })} />
+                      </div>
+                      <div>
+                        <Label>Date</Label>
+                        <Input type="date" value={tForm.transfer_date} onChange={(e) => setTForm({ ...tForm, transfer_date: e.target.value })} />
+                      </div>
+                      <div>
+                        <Label>Note (optional)</Label>
+                        <Textarea rows={2} value={tForm.narration} onChange={(e) => setTForm({ ...tForm, narration: e.target.value })} />
+                      </div>
+                      <Button className="w-full" onClick={() => createTransfer.mutate()} disabled={createTransfer.isPending}>
+                        {createTransfer.isPending ? "Submitting..." : "Submit for Approval"}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Make your payment to the church account, then record it here. Finance will verify and approve.
+                </p>
+                {myTransfers && myTransfers.length > 0 ? (
+                  <div className="space-y-2">
+                    {myTransfers.map((t: any) => (
+                      <div key={t.id} className="flex items-center justify-between py-2 border-b border-muted last:border-0">
+                        <div>
+                          <p className="text-sm font-medium capitalize">{t.giving_type} — ₦{Number(t.amount).toLocaleString()}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(t.transfer_date).toLocaleDateString()} • {t.payment_method}{t.payment_reference ? ` • Ref: ${t.payment_reference}` : ""}
+                          </p>
+                        </div>
+                        <Badge variant="outline" className={
+                          t.status === "approved" ? "bg-primary/10 text-primary" :
+                          t.status === "rejected" ? "bg-destructive/10 text-destructive" :
+                          "bg-accent/10 text-accent-foreground"
+                        }>{t.status}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-sm">No transfers yet.</p>
                 )}
               </CardContent>
             </Card>

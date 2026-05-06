@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Mail } from "lucide-react";
+import { ArrowLeft, Mail, KeyRound, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,23 +15,32 @@ const ForgotPassword = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
-  const [sent, setSent] = useState(false);
+  const [tempPassword, setTempPassword] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
+      const { data, error } = await supabase.functions.invoke("forgot-password-temp", { body: { email } });
       if (error) throw error;
-      setSent(true);
-      toast({ title: "Email sent!", description: "Check your inbox for the password reset link." });
+      if (data?.temp_password) {
+        setTempPassword(data.temp_password);
+      } else {
+        toast({ title: "Request sent", description: data?.message || "Check your email." });
+      }
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
+  };
+
+  const copyPw = async () => {
+    if (!tempPassword) return;
+    await navigator.clipboard.writeText(tempPassword);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
   };
 
   return (
@@ -52,25 +61,31 @@ const ForgotPassword = () => {
         <Card className="shadow-church border-0">
           <CardHeader className="pb-2 pt-6 text-center">
             <h2 className="text-xl font-semibold" style={{ fontFamily: 'var(--font-display)' }}>
-              {sent ? "Check Your Email" : "Reset Your Password"}
+              {tempPassword ? "Your Temporary Password" : "Reset Your Password"}
             </h2>
             <p className="text-sm text-muted-foreground">
-              {sent
-                ? "We've sent a password reset link to your email."
-                : "Enter your email and we'll send you a reset link."}
+              {tempPassword
+                ? "Use this password to sign in. We recommend changing it from Settings after login."
+                : "Enter your email — a new temporary password will be issued immediately."}
             </p>
           </CardHeader>
           <CardContent className="space-y-4 pb-6">
-            {sent ? (
-              <div className="text-center space-y-4">
+            {tempPassword ? (
+              <div className="space-y-4">
                 <div className="mx-auto w-16 h-16 rounded-full bg-secondary/10 flex items-center justify-center">
-                  <Mail className="h-8 w-8 text-secondary" />
+                  <KeyRound className="h-8 w-8 text-secondary" />
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Didn't receive the email? Check your spam folder or try again.
+                <div className="rounded-lg border bg-muted/50 p-3 flex items-center justify-between gap-2">
+                  <code className="text-base font-mono font-bold tracking-wider break-all">{tempPassword}</code>
+                  <Button size="sm" variant="outline" onClick={copyPw} className="shrink-0">
+                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  ⚠ Keep this safe. Anyone with this password can access your account until you change it.
                 </p>
-                <Button variant="outline" className="w-full" onClick={() => setSent(false)}>
-                  Try Again
+                <Button className="w-full gradient-gold text-accent-foreground font-semibold shadow-gold" onClick={() => navigate("/login")}>
+                  Go to Sign In
                 </Button>
               </div>
             ) : (
@@ -91,7 +106,7 @@ const ForgotPassword = () => {
                   disabled={loading}
                   className="w-full gradient-gold text-accent-foreground font-semibold shadow-gold hover:opacity-90"
                 >
-                  {loading ? "Sending..." : "Send Reset Link"}
+                  {loading ? "Generating..." : "Get Temporary Password"}
                 </Button>
               </form>
             )}
