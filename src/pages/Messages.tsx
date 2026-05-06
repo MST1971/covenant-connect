@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MessageSquare, Send, Users, Sparkles, Filter, Eye } from "lucide-react";
+import { ArrowLeft, MessageSquare, Send, Users, Sparkles, Filter, Eye, Clock, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 type AudienceType = "members" | "visitors";
@@ -229,6 +229,16 @@ const Messages = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [groupFilter, setGroupFilter] = useState<string>("all");
   const [visitorStatusFilter, setVisitorStatusFilter] = useState<string>("all");
+
+  const [scheduledList, setScheduledList] = useState<any[]>([]);
+  const [schedTitle, setSchedTitle] = useState("");
+  const [schedAt, setSchedAt] = useState("");
+
+  const loadScheduled = async () => {
+    const { data } = await supabase.from("scheduled_messages").select("*").order("scheduled_for", { ascending: true });
+    setScheduledList(data || []);
+  };
+  useEffect(() => { if (isAdmin) loadScheduled(); }, [isAdmin]);
 
   useEffect(() => {
     if (!isAdmin) return;
