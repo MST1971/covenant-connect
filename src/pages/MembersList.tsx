@@ -477,6 +477,29 @@ const MembersList = () => {
       {selectedMember && (
         <MemberIdCard member={selectedMember} open={showIdCard} onOpenChange={setShowIdCard} />
       )}
+
+      {/* Reset password result */}
+      <Dialog open={!!resetResult} onOpenChange={(o) => !o && setResetResult(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Temporary Password Issued</DialogTitle>
+          </DialogHeader>
+          {resetResult && (
+            <div className="space-y-3">
+              <p className="text-sm">For <strong>{resetResult.name}</strong> ({resetResult.email})</p>
+              <div className="rounded-lg border bg-muted/50 p-3 flex items-center justify-between gap-2">
+                <code className="text-base font-mono font-bold tracking-wider break-all">{resetResult.password}</code>
+                <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(resetResult.password)}>
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Share this securely with the member (e.g. via WhatsApp). They should change it from Settings after signing in.
+              </p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
