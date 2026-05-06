@@ -7,7 +7,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/useUserRole";
 import {
   Search, Filter, UserPlus, ArrowLeft, Phone, Mail, MapPin,
-  ChevronRight, Users, X, Calendar, Heart, Briefcase, QrCode, Download, IdCard, Loader2, FileDown
+  ChevronRight, Users, X, Calendar, Heart, Briefcase, QrCode, Download, IdCard, Loader2, FileDown,
+  KeyRound, Copy
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,22 @@ const MembersList = () => {
   const qc = useQueryClient();
   const { isSuperAdmin, hasRole } = useUserRole();
   const canGenerateId = isSuperAdmin || hasRole("pastor");
+  const canResetPassword = isSuperAdmin || hasRole("pastor");
+  const [resetResult, setResetResult] = useState<{ name: string; email: string; password: string } | null>(null);
+
+  const resetPassword = useMutation({
+    mutationFn: async (memberId: string) => {
+      const { data, error } = await supabase.functions.invoke("admin-reset-member-password", { body: { profile_id: memberId } });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      return data as any;
+    },
+    onSuccess: (data) => {
+      setResetResult({ name: data.member_name, email: data.member_email, password: data.temp_password });
+      toast({ title: "Password reset", description: data.message });
+    },
+    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("All Departments");
@@ -403,6 +420,28 @@ const MembersList = () => {
                   <p className="text-sm text-muted-foreground">No ID assigned yet</p>
                 )}
               </div>
+
+              <Separator className="my-2" />
+
+              {/* Password Reset */}
+              {canResetPassword && (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Account Access</h4>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (confirm(`Generate a new temporary password for ${selectedMember.full_name}?`)) {
+                        resetPassword.mutate(selectedMember.id);
+                      }
+                    }}
+                    disabled={resetPassword.isPending}
+                  >
+                    {resetPassword.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <KeyRound className="h-3.5 w-3.5 mr-1" />}
+                    Reset Password
+                  </Button>
+                </div>
+              )}
 
               <Separator className="my-2" />
 
