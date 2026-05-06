@@ -1,16 +1,22 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
   User, Calendar, Users, Heart, LogOut, Clock, Shield,
-  Building2, Edit, QrCode, Menu, X, DollarSign
+  Building2, Edit, QrCode, Menu, X, DollarSign, Send, Banknote
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useState } from "react";
+import { toast } from "sonner";
 import churchLogo from "@/assets/church-logo.png";
 
 const MemberDashboard = () => {
@@ -74,6 +80,7 @@ const MemberDashboard = () => {
     { icon: User, label: "My Profile", id: "profile" },
     { icon: Shield, label: "My Attendance", id: "attendance" },
     { icon: DollarSign, label: "My Giving", id: "giving" },
+    { icon: Send, label: "Send Tithe / Offering", id: "transfer" },
     { icon: Building2, label: "My Departments", id: "departments" },
     { icon: Users, label: "My Family", id: "family" },
   ];
