@@ -74,6 +74,58 @@ const MemberDashboard = () => {
     enabled: !!profile,
   });
 
+  const qc = useQueryClient();
+
+  const { data: myTransfers } = useQuery({
+    queryKey: ["my-transfers", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("member_transfers").select("*").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(20);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const { data: churchAccount } = useQuery({
+    queryKey: ["church-bank-account"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("app_settings").select("value").eq("key", "church_bank_account").maybeSingle();
+      if (error) throw error;
+      return (data?.value as any) || {};
+    },
+  });
+
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [tForm, setTForm] = useState({
+    amount: "", giving_type: "tithe", payment_reference: "", payment_method: "bank_transfer", narration: "", transfer_date: new Date().toISOString().slice(0, 10),
+  });
+
+  const createTransfer = useMutation({
+    mutationFn: async () => {
+      if (!profile?.id || !user?.id) throw new Error("Profile not loaded");
+      const amount = parseFloat(tForm.amount);
+      if (!amount || amount <= 0) throw new Error("Enter a valid amount");
+      const { error } = await supabase.from("member_transfers").insert({
+        profile_id: profile.id,
+        user_id: user.id,
+        amount,
+        giving_type: tForm.giving_type,
+        payment_reference: tForm.payment_reference || null,
+        payment_method: tForm.payment_method,
+        narration: tForm.narration || null,
+        transfer_date: tForm.transfer_date,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Transfer submitted for approval");
+      qc.invalidateQueries({ queryKey: ["my-transfers"] });
+      setTransferOpen(false);
+      setTForm({ amount: "", giving_type: "tithe", payment_reference: "", payment_method: "bank_transfer", narration: "", transfer_date: new Date().toISOString().slice(0, 10) });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const getInitials = (name: string) => name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 
   const navItems = [
