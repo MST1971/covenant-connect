@@ -186,6 +186,91 @@ const Finance = () => {
     onError: (e: any) => toast.error(e.message),
   });
 
+  // ============ MEMBER TRANSFER APPROVALS ============
+  const { data: pendingTransfers = [] } = useQuery({
+    queryKey: ["member_transfers_pending"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("member_transfers")
+        .select("*, profiles!member_transfers_profile_id_fkey(full_name, email, phone_number)")
+        .order("created_at", { ascending: false });
+      if (error) {
+        // fallback without join if FK relationship name differs
+        const { data: d2, error: e2 } = await supabase.from("member_transfers").select("*").order("created_at", { ascending: false });
+        if (e2) throw e2;
+        return d2;
+      }
+      return data;
+    },
+    enabled: canView,
+  });
+
+  const reviewTransfer = useMutation({
+    mutationFn: async ({ transfer, approve, notes }: { transfer: any; approve: boolean; notes?: string }) => {
+      if (!approve) {
+        const { error } = await supabase.from("member_transfers").update({
+          status: "rejected", reviewed_by: user?.id, reviewed_at: new Date().toISOString(), review_notes: notes || null,
+        }).eq("id", transfer.id);
+        if (error) throw error;
+        return;
+      }
+      // Approve: 1) giving_records, 2) financial_transactions (income), 3) update transfer
+      const defaultAccount = accounts[0];
+      if (!defaultAccount) throw new Error("Create at least one financial account first.");
+
+      // Match income category by giving_type name (case-insensitive), else use first income category
+      const incomeCats = categories.filter((c: any) => c.kind === "income");
+      const matchCat = incomeCats.find((c: any) => c.name.toLowerCase().includes(transfer.giving_type.toLowerCase())) || incomeCats[0];
+
+      const { data: gr, error: gErr } = await supabase.from("giving_records").insert({
+        profile_id: transfer.profile_id,
+        amount: transfer.amount,
+        giving_type: transfer.giving_type,
+        date: transfer.transfer_date,
+        payment_method: transfer.payment_method,
+        reference: transfer.payment_reference,
+        notes: transfer.narration,
+        recorded_by: user?.id,
+      }).select("id").single();
+      if (gErr) throw gErr;
+
+      const { data: ft, error: fErr } = await supabase.from("financial_transactions").insert({
+        kind: "income",
+        amount: transfer.amount,
+        account_id: defaultAccount.id,
+        category_id: matchCat?.id || null,
+        txn_date: transfer.transfer_date,
+        payee_or_payer: (transfer as any).profiles?.full_name || "Member",
+        description: `${transfer.giving_type}${transfer.narration ? ` — ${transfer.narration}` : ""}`,
+        reference: transfer.payment_reference,
+        payment_method: transfer.payment_method,
+        receipt_url: transfer.receipt_url,
+        giving_record_id: gr.id,
+        status: "posted",
+        recorded_by: user?.id,
+        approved_by: user?.id,
+      }).select("id").single();
+      if (fErr) throw fErr;
+
+      const { error: uErr } = await supabase.from("member_transfers").update({
+        status: "approved",
+        reviewed_by: user?.id,
+        reviewed_at: new Date().toISOString(),
+        review_notes: notes || null,
+        giving_record_id: gr.id,
+        financial_transaction_id: ft.id,
+      }).eq("id", transfer.id);
+      if (uErr) throw uErr;
+    },
+    onSuccess: () => {
+      toast.success("Done");
+      qc.invalidateQueries({ queryKey: ["member_transfers_pending"] });
+      qc.invalidateQueries({ queryKey: ["fin_txn"] });
+      qc.invalidateQueries({ queryKey: ["fin_accounts"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const exportCSV = (rows: any[], filename: string) => {
     if (!rows.length) return toast.error("Nothing to export");
     const headers = Object.keys(rows[0]);
@@ -242,6 +327,11 @@ const Finance = () => {
             <TabsTrigger value="income">Income</TabsTrigger>
             <TabsTrigger value="expense">Expenditure</TabsTrigger>
             <TabsTrigger value="transfers">Transfers</TabsTrigger>
+            <TabsTrigger value="approvals">
+              Approvals{(pendingTransfers as any[]).filter((t: any) => t.status === "pending").length > 0 && (
+                <Badge className="ml-1.5 h-4 px-1 text-[10px]">{(pendingTransfers as any[]).filter((t: any) => t.status === "pending").length}</Badge>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="budget">Budget</TabsTrigger>
             <TabsTrigger value="comparative">Budget vs Actual</TabsTrigger>
             <TabsTrigger value="recurring">Recurrent</TabsTrigger>
