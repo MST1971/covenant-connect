@@ -425,6 +425,54 @@ const Finance = () => {
             />
           </TabsContent>
 
+          {/* APPROVALS */}
+          <TabsContent value="approvals" className="mt-4">
+            <Card>
+              <CardHeader><CardTitle className="text-base flex items-center gap-2"><Inbox className="h-4 w-4" /> Member Transfer Approvals</CardTitle></CardHeader>
+              <CardContent>
+                {(pendingTransfers as any[]).length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-6 text-center">No transfer submissions yet.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {(pendingTransfers as any[]).map((t: any) => (
+                      <div key={t.id} className="border rounded-lg p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-semibold text-sm">{t.profiles?.full_name || "Member"}</p>
+                            <Badge variant="outline" className="capitalize text-[10px]">{t.giving_type}</Badge>
+                            <Badge variant="outline" className={
+                              t.status === "approved" ? "bg-primary/10 text-primary text-[10px]" :
+                              t.status === "rejected" ? "bg-destructive/10 text-destructive text-[10px]" :
+                              "bg-accent/10 text-accent-foreground text-[10px]"
+                            }>{t.status}</Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {fmt(t.amount)} • {new Date(t.transfer_date).toLocaleDateString()} • {t.payment_method}
+                            {t.payment_reference ? ` • Ref: ${t.payment_reference}` : ""}
+                          </p>
+                          {t.narration && <p className="text-xs mt-1 italic">"{t.narration}"</p>}
+                        </div>
+                        {t.status === "pending" && canEdit && (
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline" onClick={() => {
+                              const notes = prompt("Reason for rejection (optional):") || "";
+                              reviewTransfer.mutate({ transfer: t, approve: false, notes });
+                            }} disabled={reviewTransfer.isPending}>
+                              <XCircle className="h-3.5 w-3.5 mr-1" /> Reject
+                            </Button>
+                            <Button size="sm" className="gradient-gold text-accent-foreground" onClick={() => reviewTransfer.mutate({ transfer: t, approve: true })} disabled={reviewTransfer.isPending}>
+                              <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Approve
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* BUDGET */}
           <TabsContent value="budget" className="mt-4">
             <BudgetPanel year={year} canEdit={canEdit} budgets={budgets} categories={categories} budgetLines={budgetLines} activeBudget={activeBudget} />
